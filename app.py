@@ -18,6 +18,7 @@ app = dash.Dash(
 #server = app.server
 app.title = 'Datos Recientes - Plataforma de Monitoreo Salud Estructural'
 
+server = app.server
 # Contiene la estructuracion completa de la pagina 
 app.layout = html.Div([
                 
