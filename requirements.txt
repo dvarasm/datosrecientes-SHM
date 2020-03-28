@@ -19,7 +19,6 @@ numpy==1.18.2
 orca==1.5.3
 pandas==1.0.3
 pdfkit==0.6.1
-pkg-resources==0.0.0
 plotly==4.5.4
 psutil==5.7.0
 psycopg2-binary==2.8.4
