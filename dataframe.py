@@ -9,6 +9,9 @@ import collections
 import unicodedata
 from datetime import datetime as dt
 from datetime import timedelta as td
+from chart_studio.plotly import image as PlotlyImage
+from PIL import Image as PILImage
+import io
 
 # Contiene las credenciales para realizar la conección con postgresql
 #coneccion = psycopg2.connect(user="postgres",password="ferrari1",host="localhost",port="5432",database="shm_puentes")
@@ -364,7 +367,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     
     #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html
     def fig_to_uri(fig):
-        return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
+        #return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
+        return base64.b64encode(PILImage.open(io.BytesIO(PlotlyImage.get(fig)))).decode('utf-8')
     #Transforma el logo en uri, para poder ser visualizados en html
     with open("./assets/SHM-logo2.bmp", "rb") as imageFile:
         logo = base64.b64encode(imageFile.read()).decode('utf-8')

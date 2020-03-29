@@ -1075,5 +1075,6 @@ if __name__ == "__main__":
     #PORT = 8000
     #ADDRESS = '11.11.11.11'
     #app.run_server(port=PORT,host=ADDRESS,debug=False, dev_tools_ui=False, dev_tools_props_check=False)
-    app.run_server(debug=False, dev_tools_ui=False, dev_tools_props_check=False)
-    #app.run_server(port=PORT,debug=True)
+    #app.run_server(debug=False, dev_tools_ui=False, dev_tools_props_check=False)
+    #app.run_server(debug=True,dev_tools_ui=False, dev_tools_props_check=False)
+    app.run_server(debug=True)
