@@ -115,7 +115,7 @@ app.layout = html.Div([
                                     options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
                                     value=str(list(datos.nombres_ace().keys())[0]),
                                 ),
-                            ],id='sensor-multi'),
+                            ],style={'display':'none'},id='sensor-multi'),
                             html.Br(),
                             html.P(
                                 "Seleccione Fecha Inicial: ",
