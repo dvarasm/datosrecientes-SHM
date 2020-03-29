@@ -60,7 +60,7 @@ onboard==1.4.1
 orca==1.5.3
 PAM==0.4.2
 pandas==1.0.3
-paramiko==2.0.0
+paramiko==2.0.9
 passlib==1.7.1
 pdfkit==0.6.1
 pexpect==4.2.1
