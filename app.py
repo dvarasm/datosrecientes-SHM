@@ -1026,7 +1026,7 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                 fig_1.update_layout(title="Promedio de datos cada "+str(titulo_box)+", durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Aceleración (cm/s²)"})
         elif tipo_sensor == 'weather-station':
             # La variable df contiene el dataframe que se utiliza para generar el graficos OHLC
-            df = datos.datos_ace(fecha,ventana_tiempo,'humedad')
+            df = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'humedad')
 
             # Aqui se crea el grafico OHLC para la humedad
             fig_1.add_trace(
@@ -1124,8 +1124,8 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
         elif tipo_sensor == 'weather-station':
             
             #Aqui se crea el histograma circular que contine datos de la direccion y velocidad del viento
-            dir = datos.datos_ace(fecha,ventana_tiempo,'dir_viento')['dir_viento'].tolist()
-            vel = datos.datos_ace(fecha,ventana_tiempo,'vel_viento')['vel_viento'].tolist()
+            dir = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'dir_viento')['dir_viento'].tolist()
+            vel = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'vel_viento')['vel_viento'].tolist()
 
             tmp1 = collections.Counter(dir)
             ini,fin = datos.rangos(tmp1)

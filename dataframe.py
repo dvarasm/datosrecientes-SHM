@@ -7,18 +7,24 @@ import webbrowser
 import base64
 import collections
 import unicodedata
+import plotly
 from datetime import datetime as dt
 from datetime import timedelta as td
-from chart_studio.plotly import image as PlotlyImage
-from PIL import Image as PILImage
-import io
-import chart_studio.plotly as py
 
 # Contiene las credenciales para realizar la conección con postgresql
-#coneccion = psycopg2.connect(user="postgres",password="ferrari1",host="localhost",port="5432",database="shm_puentes")
+'''
+coneccion = psycopg2.connect(user="postgres",
+                                  password="ferrari1",
+                                  host="localhost",
+                                  port="5432",
+                                  database="shm_puentes")
+'''
+coneccion = psycopg2.connect(user="qlhalplmkayixb",
+                                  password="08c3ce3637d78695ab14e09427d7392181c78e92061de836782c1f966b4e3c6d",
+                                  host="ec2-3-234-169-147.compute-1.amazonaws.com",
+                                  port="5432",
+                                  database="d2kgv5span6j91")
 
-coneccion = psycopg2.connect(user="clandero",password="219UNIx2",host="152.74.52.187",port="5432",database="prototipo_shm")
-esquema = ['public.','inventario_puentes.','llacolen.']
 
 #Funcion para crear el dataframe a utilizar en el grafico OHLC, ademas el valor de la columna avg se utiliza para para el histograma
 #La funcion requiere de una fecha inicial, para calcular a partir de esta los rangos de fechas
@@ -32,18 +38,18 @@ def datos_ace(fecha_inicio,freq,sensor):
         #consultas a la base de datos
         #La query1 entrega el avg,min y max de un rango de tiempo
         query1 = ("SELECT avg(lectura) as "+str(sensor)+", min(lectura) as min, max(lectura) as max "
-             "FROM "+str(esquema[2])+str(sensor)+" "
+             "FROM public."+str(sensor)+" "
              "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
         #La query2 entrega el primer elemento de la base de datos al inicio del rango de tiempo y el ultimo elemento al final del rango de tiempo
         query2 = ("(SELECT lectura as open "
-             "FROM "+str(esquema[2])+str(sensor)+" "
+             "FROM public."+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i])+"' "
-             "Order BY fecha ASC LIMIT 1)"
+             "Order BY id_lectura ASC LIMIT 1)"
              "UNION ALL"
              "(SELECT lectura as close "
-             "FROM "+str(esquema[2])+str(sensor)+" "
+             "FROM public."+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i+1])+"' "
-             "Order BY fecha DESC LIMIT 1)")
+             "Order BY id_lectura DESC LIMIT 1)")
         tmp = pd.read_sql_query(query1,coneccion)
         tmp1 = pd.read_sql_query(query2,coneccion)
         #comprobaciones si por algun motivo en la fecha en que se busca un valor no existe, este reemplaza por 0
@@ -110,6 +116,14 @@ def datos_por_rango(df,inicial,final):
 		tt.append(media)
 	return rr,tt
 
+#Dependiendo de los sensores disponibles, se muestra la alternativa de cambiar el tipo de visualizacion de 1-sensor o varios-sensores
+def cantidad_sensores_visualizar(tipo_sensor):
+    if tipo_sensor == 'acelerometro':
+        cantidad_sensores = {"1 Sensor":"1-sensor","Varios Sensores":"varios-sensores"}
+    else:
+        cantidad_sensores = {"1 Sensor":"1-sensor"}
+    return dict(cantidad_sensores)
+
 # Funcion que retorna dependiendo de la cantidad de dias disponibles en la base de datos, las opciones a seleccionar en el RadioItem
 def ventana_tiempo(tipo):
     if tipo == 0:
@@ -137,12 +151,16 @@ def crear_hora(hora):
 
 # Funcion que retorna los nombres de los acelerometros disponibles a seleccionar en el Dropdown
 def nombres_ace():
-    df = pd.read_sql_query("SELECT DISTINCT nombre_tabla FROM "+str(esquema[1])+"sensores_instalados WHERE nombre_tabla like '%.acelerometro%';",coneccion)
-    nombres = df['nombre_tabla'].tolist()
+    df = pd.read_sql_query('''SELECT DISTINCT nombre_sensor FROM public.sensores WHERE tipo_sensor = 'Acelerómetro';''',coneccion)
+    nombres = df['nombre_sensor'].tolist()
     nombres = sorted(nombres, key=lambda x: int("".join([i for i in x if i.isdigit()])))
     nombres_sensores = {}
     for nom in nombres:
-        nombres_sensores[nom.split('.')[1]] = str(nom.split('.')[1])
+        nombres_sensores[str(elimina_tildes(nom)).lower().replace(' ', '_') ] = str(nom)
+    #nombres_ace = {"acelerometro_1": "Acelerómetro 1", "acelerometro_2": "Acelerómetro 2","acelerometro_3": "Acelerómetro 3","acelerometro_4": "Acelerómetro 4", 
+    #        "acelerometro_5": "Acelerómetro 5","acelerometro_6": "Acelerómetro 6","acelerometro_7": "Acelerómetro 7", "acelerometro_8": "Acelerómetro 8",
+    #        "acelerometro_9": "Acelerómetro 9","acelerometro_10": "Acelerómetro 10", "acelerometro_11": "Acelerómetro 11","acelerometro_12": "Acelerómetro 12",
+    #        "acelerometro_13": "Acelerómetro 13", "acelerometro_14": "Acelerómetro 14","acelerometro_bi_1": "Acelerómetro biaxial 1","acelerometro_bi_2": "Acelerómetro biaxial 2"}
     return dict(nombres_sensores)
 
 # Funcion que retorna los nombres de las weather station disponibles a seleccionar en el Dropdown
@@ -165,17 +183,6 @@ def nombres_lvdt():
     nombres_lvdt = {"lvdt_1": "LVDT 1"}
     return dict(nombres_lvdt)
 
-#Dependiendo de los sensores disponibles, se muestra la alternativa de cambiar el tipo de visualizacion de 1-sensor o varios-sensores
-def cantidad_sensores_visualizar(tipo_sensor):
-    if tipo_sensor == 'acelerometro':
-        if len(nombres_ace().keys()) > 1:
-            cantidad_sensores = {"1 Sensor":"1-sensor","Varios Sensores":"varios-sensores"}
-        else:
-            cantidad_sensores = {"1 Sensor":"1-sensor"}
-    else:
-        cantidad_sensores = {"1 Sensor":"1-sensor"}
-    return dict(cantidad_sensores)
-
 #Funcion que elimina tildes
 def elimina_tildes(cadena):
     sin = ''.join((c for c in unicodedata.normalize('NFD',cadena) if unicodedata.category(c) != 'Mn'))
@@ -183,31 +190,32 @@ def elimina_tildes(cadena):
 
 # Funcion que retorna los nombres de los tipos de sensores disponibles a seleccionar en el Dropdown
 def tipos_sensores():
-    df = pd.read_sql_query("SELECT DISTINCT nombre FROM "+str(esquema[1])+"tipos_de_sensor;",coneccion)
-    tipos = df['nombre'].tolist()
+    df = pd.read_sql_query('''SELECT DISTINCT tipo_sensor FROM public.sensores;''',coneccion)
+    tipos = df['tipo_sensor'].tolist()
     tipos.sort(reverse=False)
     tipos_sensores = {}
-    #for tipo in tipos:
-    #    tipos_sensores[str(elimina_tildes(tipo)).lower().replace(' ', '-') ] = str(tipo)
-    tipos_sensores[str(elimina_tildes(tipos[0])).lower().replace(' ', '-') ] = str(tipos[0])
+    for tipo in tipos:
+        tipos_sensores[str(elimina_tildes(tipo)).lower().replace(' ', '-') ] = str(tipo)
+    #tipos_sensores = {"acelerometro":"Acelerómetro","weather-station":"Weather Station","strain-gauge":"Strain Gauge","inclinometro":"Inclinómetro","lvdt":"LVDT"}
+    #tipos_sensores = {"acelerometro":"Acelerómetro","weather-station":"Weather Station"}
     return dict(tipos_sensores)
 
 # Funcion que retorna la minima fecha que existe en la base de datos
 def fecha_inicial(tipo_sensor):
     if tipo_sensor == 'acelerometro':
-        return pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+"acelerometro_5493257 ORDER BY fecha ASC LIMIT 1 ",coneccion)['fecha'][0]
+        return pd.read_sql_query('''SELECT fecha FROM public.acelerometro_1 ORDER BY id_lectura ASC LIMIT 1''',coneccion)['fecha'][0]
     elif tipo_sensor == 'weather-station':
-        return pd.read_sql_query("SELECT fecha FROM "+str(esquema[0])+"temperatura ORDER BY id_lectura ASC LIMIT 1 ",coneccion)['fecha'][0]
+        return pd.read_sql_query('''SELECT fecha FROM public.temperatura ORDER BY id_lectura ASC LIMIT 1''',coneccion)['fecha'][0]
 
 # Funcion que retorna la ultima fecha que existe en la base de datos
 def fecha_final(tipo_sensor):
     if tipo_sensor == 'acelerometro':
-        fecha =  pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+"acelerometro_5493257 ORDER BY fecha DESC LIMIT 1 ",coneccion)['fecha'][0]
+        fecha =  pd.read_sql_query('''SELECT fecha FROM public.acelerometro_1 ORDER BY id_lectura DESC LIMIT 1''',coneccion)['fecha'][0]
         if fecha == None:
             fecha = dt (2008,1,16,23,18,28)
         return fecha
     elif tipo_sensor == 'weather-station':
-        fecha = pd.read_sql_query("SELECT fecha FROM "+str(esquema[0])+"temperatura ORDER BY id_lectura DESC LIMIT 1 ",coneccion)['fecha'][0]
+        fecha = pd.read_sql_query('''SELECT fecha FROM public.temperatura ORDER BY id_lectura DESC LIMIT 1''',coneccion)['fecha'][0]
         if fecha == None:
             fecha = dt (2008,4,1,0,38,36)
         return fecha
@@ -221,11 +229,11 @@ def horas_del_dia(sensor,fecha_inicial):
     fecha_final = fecha_inicial + td(days=1)
     if sensor == 'weather-station_1':
         horas =  pd.read_sql_query("select distinct extract(hour from  fecha) as horas "
-                                   "from "+str(esquema[0])+"temperatura "
+                                   "from public.temperatura "
                                    "where fecha between '"+str(fecha_inicial)+"' and '"+str(fecha_final)+"';",coneccion)
     else:
         horas =  pd.read_sql_query("select distinct extract(hour from  fecha) as horas "
-                                   "from "+str(esquema[2])+str(sensor)+" "
+                                   "from public."+str(sensor)+" "
                                    "where fecha between '"+str(fecha_inicial)+"' and '"+str(fecha_final)+"';",coneccion)
     horas = list(map(int, horas['horas'].tolist()))
     horas.sort()
@@ -303,7 +311,7 @@ def datos_box(fecha_inicio,freq,sensor):
     rango_horas = list(pd.date_range(fecha_inicio, periods=periodo, freq=freq).strftime('%Y-%m-%d %H:%M:%S'))
     for i in range(len(rango_horas)-1):
         query1 = ("SELECT avg(lectura) as "+str(sensor)+" "
-                  "FROM "+str(esquema[2])+str(sensor)+" "
+                  "FROM public."+str(sensor)+" "
                   "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
         df = pd.read_sql_query(query1,coneccion)[sensor]
         for j in range(1):
