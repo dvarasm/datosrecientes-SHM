@@ -703,18 +703,10 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                 promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(new_df,new_sensor)
 
                 fig_principal = go.Figure(data=trace_principal)
-                fig_1 = go.Figure(data=trace_sec1)
-                fig_2 = go.Figure(data=trace_sec2)
+    
                 fig_principal.update(layout_xaxis_rangeslider_visible=False)
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
-
-                # Titulos para el grafico OHLC y Boxplot
-                titulo_box = datos.titulo_box(ventana_tiempo)
             
-   
-                fig_1.update_layout(title="Promedio de datos cada "+str(titulo_box)+", durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Aceleración (cm/s²)"})
-                fig_2.update_layout(title="Frecuencia de datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+"<br>durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Frecuencia (N° de Datos)"}, xaxis={"title": "Aceleración (cm/s²)"},bargap=0.1,)
-
                 fig_principal.update_layout(title={'text':"Datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+", durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")"},yaxis={"title": "Aceleración (cm/s²)"})
 
                 df = pd.concat(list_df, axis=0,ignore_index=True)
@@ -994,11 +986,6 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                 #colores para las graficas
                 colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000']
                 count = 0
-                new_count_de = 0
-                new_count_in = 1
-                new_df = pd.DataFrame()
-                new_sensor = ''
-                list_df = []
 
                 #por cada sensor seleccionado se crean df 
                 for sen in sensor_multi:
@@ -1126,6 +1113,14 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                         )
                     )
                     count = count + 1
+                
+                fig_2 = go.Figure(data=trace_sec2)
+                
+                titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
+            
+                fig_2.update_layout(title="Frecuencia de datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+"<br>durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Frecuencia (N° de Datos)"}, xaxis={"title": "Aceleración (cm/s²)"},bargap=0.1,)
+
+
         elif tipo_sensor == 'weather-station':
             
             #Aqui se crea el histograma circular que contine datos de la direccion y velocidad del viento

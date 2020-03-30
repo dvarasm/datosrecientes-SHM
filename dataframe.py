@@ -12,6 +12,7 @@ from datetime import timedelta as td
 from chart_studio.plotly import image as PlotlyImage
 from PIL import Image as PILImage
 import io
+import chart_studio.plotly as py
 
 # Contiene las credenciales para realizar la conección con postgresql
 #coneccion = psycopg2.connect(user="postgres",password="ferrari1",host="localhost",port="5432",database="shm_puentes")
@@ -367,74 +368,171 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     
     #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html
     def fig_to_uri(fig):
-        #return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
-        return base64.b64encode(PILImage.open(io.BytesIO(PlotlyImage.get(fig)))).decode('utf-8')
+        return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
+
+    #Trasforma la figura en un Div para luego ser incrustada en el html, para no utilizar ORCA 
+    #def fig_to_div(fig):
+    #	return plotly.offline.plot(fig,config={"displayModeBar": False},show_link=False,include_plotlyjs=False,output_type='div')
+
     #Transforma el logo en uri, para poder ser visualizados en html
     with open("./assets/SHM-logo2.bmp", "rb") as imageFile:
         logo = base64.b64encode(imageFile.read()).decode('utf-8')
     
     # se guardan los garficos en formato uri en una lista
     graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
+    #graficos =  [fig_to_div(fig_principal),fig_to_div(fig_sec1),fig_to_div(fig_sec2)]
 
     # si es mas de 1 sensor en la visualizacion, se guardan los nombres en un string
     sensores_multi = ''
     if cantidad_sensores != '1-sensor':
         for sen in sensor_multi: 
             sensores_multi += str(sen) + ','
+
+    meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    fecha_datos = str(fecha).split(sep='T')[0]
+    fecha_max = str(fecha_valor_max).split(sep=' ')[0]
+    fecha_min = str(fecha_valor_min).split(sep=' ')[0]
+    dia_datos = str(fecha_datos).split(sep='-')[2]
+    dia_max = str(fecha_max).split(sep='-')[2]
+    dia_min = str(fecha_min).split(sep='-')[2]
+    mes_datos = str(meses[int(str(fecha_datos).split(sep='-')[1])])
+    mes_max = str(meses[int(str(fecha_max).split(sep='-')[1])])
+    mes_min = str(meses[int(str(fecha_min).split(sep='-')[1])])
+    ano_datos = str(fecha_datos).split(sep='-')[0]
+    ano_max = str(fecha_max).split(sep='-')[0]
+    ano_min = str(fecha_min).split(sep='-')[0]
+
+    if valor_linea_control_sup != None and valor_linea_control_inf != None:
+        fecha_inf = str(fecha_alert_inf).split(sep=' ')[0]
+        fecha_sup = str(fecha_alert_sup).split(sep=' ')[0]
+        dia_inf = str(fecha_inf).split(sep='-')[2]
+        dia_sup = str(fecha_sup).split(sep='-')[2]
+        mes_inf = str(meses[int(str(fecha_inf).split(sep='-')[1])])
+        mes_sup = str(meses[int(str(fecha_sup).split(sep='-')[1])])
+        ano_inf = str(fecha_inf).split(sep='-')[0]
+        ano_sup = str(fecha_sup).split(sep='-')[0]
+    elif valor_linea_control_inf != None:
+        fecha_inf = str(fecha_alert_inf).split(sep=' ')[0]
+        dia_inf = str(fecha_inf).split(sep='-')[2]
+        mes_inf = str(meses[int(str(fecha_inf).split(sep='-')[1])])
+        ano_inf = str(fecha_inf).split(sep='-')[0]
+    elif valor_linea_control_sup != None:
+        fecha_sup = str(fecha_alert_sup).split(sep=' ')[0]
+        dia_sup = str(fecha_sup).split(sep='-')[2]
+        mes_sup = str(meses[int(str(fecha_sup).split(sep='-')[1])])
+        ano_sup = str(fecha_sup).split(sep='-')[0]
+    
     
     ##Plantilla html
     encabezado_multi = (
         '<html lang="es">'
+        '<head>'
+            '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>'
+            '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">'
+            '<style>body{ margin:0 100; background:whitesmoke; }</style>'
+        '</head>'
         '<body style="margin:60">'
         '<h1 style="text-align: center;"><img style="font-size: 14px; text-align: justify; float: left;" src="data:image/png;base64,'+logo+'" alt="Logo SHM" width="102" height="73" margin= "5px"/></h1>'
         '<h1 style="text-align: left;"><span style="font-family:arial,helvetica,sans-serif;"><strong>  Datos Recientes</strong></h1>'
         '<h2> <span style="font-family:arial,helvetica,sans-serif;">Plataforma Monitoreo Salud Estructural</h2>'
         '<p>&nbsp;</p>'
-        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Datos obtenidos de los sensores <strong>"'+str(sensores_multi)+'"</strong>, la ventana de tiempo seleccionada para las visualizaciones es de <strong>"'+str(titulo_OHLC(ventana_tiempo))+'"</strong>, el dia '+str(fecha).split(sep='T')[0]+' desde las '+str(crear_hora(int(hora)))+' a las '+str(crear_hora(int(hora) + 1))+' .</p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Datos obtenidos de los sensores <strong>"'+str(sensores_multi)+'"</strong>, la ventana de tiempo seleccionada para las visualizaciones es de <strong>"'+str(titulo_OHLC(ventana_tiempo))+'"</strong>, el dia '+str(dia_datos)+' de '+str(mes_datos)+' de '+str(ano_datos)+' desde las '+str(crear_hora(int(hora)))+' a las '+str(crear_hora(int(hora) + 1))+' .</p>'
         '<p>&nbsp;</p>'
     )
+    '''
+    img = (''
+        '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:850;"> {image} </div></p>'
+        '')
 
+    img2 = (''
+        '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:600;"> {image} </div></p>'
+        '')
+    '''
     img = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="850" height="400" /></p>'
         '')
     img2 = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="600" height="400" /></p>'
         '')
-    
+
     encabezado = (
         '<html lang="es">'
+        '<head>'
+            '<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>'
+            '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">'
+            '<style>body{ margin:0 100; background:whitesmoke; }</style>'
+        '</head>'
         '<body style="margin:60">'
         '<h1 style="text-align: center;"><img style="font-size: 14px; text-align: justify; float: left;" src="data:image/png;base64,'+logo+'" alt="Logo SHM" width="102" height="73" margin= "5px"/></h1>'
         '<h1 style="text-align: left;"><span style="font-family:arial,helvetica,sans-serif;"><strong>  Datos Recientes</strong></h1>'
         '<h2> <span style="font-family:arial,helvetica,sans-serif;">Plataforma Monitoreo Salud Estructural</h2>'
         '<p>&nbsp;</p>'
-        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Datos obtenidos del sensor <strong>"'+str(sensor)+'"</strong> la ventana de tiempo seleccionada para las visualizaciones es de <strong>"'+str(titulo_OHLC(ventana_tiempo))+'"</strong>, el dia '+str(fecha).split(sep='T')[0]+' desde las '+str(crear_hora(int(hora)))+' a las '+str(crear_hora(int(hora) + 1))+' .</p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Datos obtenidos del sensor <strong>"'+str(sensor)+'"</strong> la ventana de tiempo seleccionada para las visualizaciones es de <strong>"'+str(titulo_OHLC(ventana_tiempo))+'"</strong>, el dia '+str(dia_datos)+' de '+str(mes_datos)+' de '+str(ano_datos)+' desde las '+str(crear_hora(int(hora)))+' a las '+str(crear_hora(int(hora) + 1))+' .</p>'
         '<p>&nbsp;</p>'
     )
+
     resumen = (
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>Resumen de Indicadores</strong></p>'
-        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Los datos seleccionados tienen un valor promedio de '+str(valor_promedio)+', adem&aacute;s de un valor m&aacute;ximo de '+str(valor_max)+', que se repite '+str(num_valor_max)[10:len(str(num_valor_max))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(fecha_valor_max).split(sep=' ')[0]+' a las '+str(fecha_valor_max).split(sep=' ')[1]+' y por &uacute;ltimo un valor m&iacute;nimo de '+str(valor_min)+' que se repite '+str(num_valor_min)[10:len(str(num_valor_min))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(fecha_valor_min).split(sep=' ')[0]+' a las '+str(fecha_valor_min).split(sep=' ')[1]+'.</p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor promedio: <strong>'+str(valor_promedio)+'</strong></p>'  
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor m&aacute;ximo: <strong>'+str(valor_max)+'</strong>,   Repeticiones: <strong>'+str(num_valor_max)[10:len(str(num_valor_max))]+'</strong>,   Fecha de &uacute;ltima repetici&oacute;n: <strong>'+str(dia_max)+'-'+str(mes_max)+'-'+str(ano_max)+' '+str(fecha_valor_max).split(sep=' ')[1]+'</strong></p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor m&iacute;nimo: <strong>'+str(valor_min)+'</strong>,   Repeticiones: <strong>'+str(num_valor_min)[10:len(str(num_valor_min))]+'</strong>,   Fecha de &uacute;ltima repetici&oacute;n: <strong>'+str(dia_min)+'-'+str(mes_min)+'-'+str(ano_min)+' '+str(fecha_valor_min).split(sep=' ')[1]+'</strong></p>'
         '<p>&nbsp;</p>'
     )
     resumen_multi = (
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>Resumen de Indicadores</strong></p>'
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">(Datos del &uacute;ltimo sensor seleccionado)</p>'
-        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Los datos seleccionados tienen un valor promedio de '+str(valor_promedio)+', adem&aacute;s de un valor m&aacute;ximo de '+str(valor_max)+', que se repite '+str(num_valor_max)[10:len(str(num_valor_max))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(fecha_valor_max).split(sep=' ')[0]+' a las '+str(fecha_valor_max).split(sep=' ')[1]+' y por &uacute;ltimo un valor m&iacute;nimo de '+str(valor_min)+' que se repite '+str(num_valor_min)[10:len(str(num_valor_min))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(fecha_valor_min).split(sep=' ')[0]+' a las '+str(fecha_valor_min).split(sep=' ')[1]+'.</p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor promedio: <strong>'+str(valor_promedio)+'</strong></p>'  
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor m&aacute;ximo: <strong>'+str(valor_max)+'</strong>,   Repeticiones: <strong>'+str(num_valor_max)[10:len(str(num_valor_max))]+'</strong>,   Fecha de &uacute;ltima repetici&oacute;n: <strong>'+str(dia_max)+'-'+str(mes_max)+'-'+str(ano_max)+' '+str(fecha_valor_max).split(sep=' ')[1]+'</strong></p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor m&iacute;nimo: <strong>'+str(valor_min)+'</strong>,   Repeticiones: <strong>'+str(num_valor_min)[10:len(str(num_valor_min))]+'</strong>,   Fecha de &uacute;ltima repetici&oacute;n: <strong>'+str(dia_min)+'-'+str(mes_min)+'-'+str(ano_min)+' '+str(fecha_valor_min).split(sep=' ')[1]+'</strong></p>'
         '<p>&nbsp;</p>'
     )
-    
+    '''
+    resumen = (
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>Resumen de Indicadores</strong></p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Los datos seleccionados tienen un valor promedio de '+str(valor_promedio)+', adem&aacute;s de un valor m&aacute;ximo de '+str(valor_max)+', que se repite '+str(num_valor_max)[10:len(str(num_valor_max))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(dia_max)+' de '+str(mes_max)+' de '+str(ano_max)+' a las '+str(fecha_valor_max).split(sep=' ')[1]+' y por &uacute;ltimo un valor m&iacute;nimo de '+str(valor_min)+' que se repite '+str(num_valor_min)[10:len(str(num_valor_min))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(dia_min)+' de '+str(mes_min)+' de '+str(ano_min)+' a las '+str(fecha_valor_min).split(sep=' ')[1]+'.</p>'
+        '<p>&nbsp;</p>'
+    )
+    resumen_multi = (
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>Resumen de Indicadores</strong></p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">(Datos del &uacute;ltimo sensor seleccionado)</p>'
+        '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Los datos seleccionados tienen un valor promedio de '+str(valor_promedio)+', adem&aacute;s de un valor m&aacute;ximo de '+str(valor_max)+', que se repite '+str(num_valor_max)[10:len(str(num_valor_max))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(dia_max)+' de '+str(mes_max)+' de '+str(ano_max)+' a las '+str(fecha_valor_max).split(sep=' ')[1]+' y por &uacute;ltimo un valor m&iacute;nimo de '+str(valor_min)+' que se repite '+str(num_valor_min)[10:len(str(num_valor_min))]+' vez y su &uacute;ltima repetici&oacute;n fue el '+str(dia_min)+' de '+str(mes_min)+' de '+str(ano_min)+' a las '+str(fecha_valor_min).split(sep=' ')[1]+'.</p>'
+        '<p>&nbsp;</p>'
+    )
+    '''
     linea = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>L&iacute;neas de control </strong></p>')
     linea_multi = (
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>L&iacute;neas de control </strong></p>'
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">(Datos de todos los sensores seleccionados)</p>'
         )
     if valor_linea_control_sup != None and valor_linea_control_inf != None:
-        linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(fecha_alert_sup).split(sep=' ')[0]+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
-        linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(fecha_alert_inf).split(sep=' ')[0]+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
+        linea_sup = (
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor de l&iacute;nea de control superior: <strong>'+str(valor_linea_control_sup)+'</strong></p>'
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks superiores: <strong>'+str(alert_sup)+'</strong></p>' 
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak superior detectado: <strong>'+str(dia_sup)+'-'+str(mes_sup)+'-'+str(ano_sup)+' '+str(fecha_alert_sup).split(sep=' ')[1]+'</strong></p>'
+            )
+        linea_inf = (
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor de l&iacute;nea de control inferior: <strong>'+str(valor_linea_control_inf)+'</strong></p>'
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks inferiores: <strong>'+str(alert_inf)+'</strong></p>' 
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak inferior detectado: <strong>'+str(dia_inf)+'-'+str(mes_inf)+'-'+str(ano_inf)+' '+str(fecha_alert_inf).split(sep=' ')[1]+'</strong></p>'
+            )
+        '''
+        linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_sup)+' de '+str(mes_sup)+' de '+str(ano_sup)+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
+        linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_inf)+' de '+str(mes_inf)+' de '+str(ano_inf)+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
+        '''
     elif valor_linea_control_sup != None:
-        linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(fecha_alert_sup).split(sep=' ')[0]+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
+        linea_sup = (
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor de l&iacute;nea de control superior: <strong>'+str(valor_linea_control_sup)+'</strong></p>'
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks superiores: <strong>'+str(alert_sup)+'</strong></p>' 
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak superior detectado: <strong>'+str(dia_sup)+'-'+str(mes_sup)+'-'+str(ano_sup)+' '+str(fecha_alert_sup).split(sep=' ')[1]+'</strong></p>'
+            )
+        #linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_sup)+' de '+str(mes_sup)+' de '+str(ano_sup)+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
     elif valor_linea_control_inf != None:
-        linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(fecha_alert_inf).split(sep=' ')[0]+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
+        linea_inf = (
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor de l&iacute;nea de control inferior: <strong>'+str(valor_linea_control_inf)+'</strong></p>'
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks inferiores: <strong>'+str(alert_inf)+'</strong></p>' 
+            '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak inferior detectado: <strong>'+str(dia_inf)+'-'+str(mes_inf)+'-'+str(ano_inf)+' '+str(fecha_alert_inf).split(sep=' ')[1]+'</strong></p>'
+            )
+        #linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_inf)+' de '+str(mes_inf)+' de '+str(ano_inf)+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
 
     fecha = (
         '<p style="text-align: justify; padding-left: 30px; padding-right: 30px;"><span style="font-family:arial,helvetica,sans-serif;">Reporte del obtenido el '+str(time.strftime("%d/%m/%y"))+' a las&nbsp;'+str(time.strftime("%H:%M:%S"))+'</p>'
@@ -480,7 +578,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     #Funcion que abre el pdf recien creado
     
     #en chrome
-    #webbrowser.get('google-chrome').open_new_tab('reporte.pdf')
+    webbrowser.get('google-chrome').open_new_tab('reporte.pdf')
     
     #en navegador o lector de pdf por defecto
-    webbrowser.open_new_tab('reporte.pdf')
+    #webbrowser.open_new_tab('reporte.pdf')
