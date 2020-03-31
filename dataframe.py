@@ -678,12 +678,12 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             reporte = encabezado + resumen + linea + linea_sup + imagenes + fecha
 
     #Funcion que transforma el html en pdf
-    pdfkit.from_string(reporte,'reporte.pdf')
+    pdfkit.from_string(reporte,'/app/reporte.pdf')
 
     #Funcion que abre el pdf recien creado
     
     #en chrome
-    webbrowser.get('google-chrome').open_new_tab('./reporte.pdf')
+    webbrowser.get('google-chrome').open_new_tab('./app/reporte.pdf')
     
     #en navegador o lector de pdf por defecto
     #webbrowser.open_new_tab('reporte.pdf')
