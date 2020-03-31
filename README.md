@@ -1,13 +1,18 @@
-Para ejecutar el subsistema
+# Requerimientos
 
-instalar primero
+Instalar
 
-sudo apt install npm
-sudo apt-get install wkhtmltopdf
+- sudo apt-get install npm
+- sudo apt-get install wkhtmltopdf
 
-#se debe instalar como root
-npm install -g electron@1.8.4 orca 
+Instalar como root
+- npm install -g electron@1.8.4 orca 
 
-instalar requerimientos de python
+Instalar requerimientos de python mediante pip
 
-pip install -r requeriments.txt
+- pip install -r requeriments.txt
+
+Por ultimo ejecutar 
+- python app.py
+
+(El subsistema esta construido en Python 3.6)
