@@ -216,11 +216,11 @@ app.layout = html.Div([
                                     dcc.Input(
                                         id='linea-control-sup', 
                                         type="number", 
-                                        placeholder="Ingrese Valor",
+                                        placeholder="Solo valores positivos",
                                         min=0, 
                                         max=1000, 
                                         step=0.001,
-                                        style={"width": "28%",'font-size':'15px'}
+                                        style={"width": "35%",'font-size':'15px'}
                                     ),
                                 ],style={'textAlign': 'center'}),
                                 html.Br(),
@@ -250,12 +250,12 @@ app.layout = html.Div([
                                     dcc.Input(
                                         id='linea-control-inf', 
                                         type="number", 
-                                        placeholder="Ingrese Valor",
+                                        placeholder="Solo valores negativos",
                                         value =None,
                                         min=-1000, 
                                         max=0, 
                                         step=0.001,
-                                        style={"width": "28%",'font-size':'15px'}
+                                        style={"width": "35%",'font-size':'15px'}
                                     ),
                                 ],style={'textAlign': 'center'}),
                                 html.Br(),
@@ -627,6 +627,8 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
     fig_principal = go.Figure()
     alert_inf, alert_sup, fecha_peak_sup, fecha_peak_inf = '---','---','---','---'
     promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = '---','---','---','---','---','---','---'
+    #Listas que conteneran cada trace generado por cada dataframe creado para poder visualizarlos en una grafica
+    trace_principal = []
     if n_clicks >= 0:
         fecha_ini_titulo,fecha_fin_titulo = datos.fecha_titulo(fecha,ventana_tiempo) 
         #Dependiendo del tipo de sensor se crean visualizaciones distintas
@@ -639,7 +641,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                 print("Tiempo Transcurrido crear DF: %0.1f seconds." % elapsed_time)
                 # Aqui se crea el grafico OHLC
                 start_time = time()
-                fig_principal = go.Figure(data=go.Ohlc(x=df['fecha'],
+                trace_principal.append(go.Ohlc(x=df['fecha'],
                     open=df['open'],
                     high=df['max'],
                     low=df['min'],
@@ -648,6 +650,24 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                     decreasing_line_color= 'red',
                     name=sensor,
                     showlegend=False))
+
+                fig_principal = go.Figure(data=trace_principal)
+                #Aqui se agregan las lineas de control
+                if (click_linea_inf > 0 and linea_control_inf != None) and (click_linea_sup > 0 and linea_control_sup != None):
+                    trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                    trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                    trace_linea_inf.extend(trace_linea_sup)
+                    fig_principal = go.Figure(data=trace_linea_inf)
+
+                #Linea de control inferior
+                elif click_linea_inf > 0 and linea_control_inf != None:
+                    trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                    fig_principal = go.Figure(data=trace_linea_inf)
+                #Linea de control superior       
+                elif click_linea_sup > 0 and linea_control_sup != None:
+                    trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                    fig_principal = go.Figure(data=trace_linea_sup)
+                
                 fig_principal.update(layout_xaxis_rangeslider_visible=False)
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
                 fig_principal.update_layout(title={'text':"Datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+" del "+str(datos.nombres_ace()[sensor])+" durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")"},yaxis={"title": "Aceleración (cm/s²)"})
@@ -658,9 +678,6 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                 #Variables que contienen los datos a mostrar en los indicadores de promedio, minimo y maximo
                 promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(df,sensor)
             else:
-
-                #Listas que conteneran cada trace generado por cada dataframe creado para poder visualizarlos en una grafica
-                trace_principal = []
                 
                 #colores para las graficas
                 colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000']
@@ -703,6 +720,21 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                 promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(new_df,new_sensor)
 
                 fig_principal = go.Figure(data=trace_principal)
+                #Aqui se agregan las lineas de control
+                if (click_linea_inf > 0 and linea_control_inf != None) and (click_linea_sup > 0 and linea_control_sup != None):
+                    trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                    trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                    trace_linea_inf.extend(trace_linea_sup)
+                    fig_principal = go.Figure(data=trace_linea_inf)
+
+                #Linea de control inferior
+                elif click_linea_inf > 0 and linea_control_inf != None:
+                    trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                    fig_principal = go.Figure(data=trace_linea_inf)
+                #Linea de control superior       
+                elif click_linea_sup > 0 and linea_control_sup != None:
+                    trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                    fig_principal = go.Figure(data=trace_linea_sup)
     
                 fig_principal.update(layout_xaxis_rangeslider_visible=False)
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
@@ -711,99 +743,13 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
 
                 df = pd.concat(list_df, axis=0,ignore_index=True)
 
-            #Aqui se agregan las lineas de control
-            #Linea de control inferior
-            if click_linea_inf > 0 and linea_control_inf != None:
-                y = []
-
-                #Bucle que agrega una linea recta en el valor ingresado 
-                for i in range(len(df["fecha"])):
-                    y.append(float(linea_control_inf))
-                fig_principal.add_trace(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Linea Inferior',showlegend=False))
-                # Calculo de peaks
-                if(float(linea_control_inf) < 0):
-                    peak = []
-                    columnas = ['min','max','open','close']
-                    # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
-                    peaks_inf = datos.peak(-(df['min']),-(linea_control_inf))
-                    peaks_sup = datos.peak(-(df['max']),-(linea_control_inf))
-                    peaks_ini = datos.peak(-(df['open']),-(linea_control_inf))
-                    peaks_fin = datos.peak(-(df['close']),-(linea_control_inf))
-
-                    peak.append(peaks_inf)
-                    peak.append(peaks_sup)
-                    peak.append(peaks_ini)
-                    peak.append(peaks_fin)    
-
-                    alert_inf = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
-                    alert_inf = str(alert_inf) + " peaks"
-                    #Obtine la fecha del ultimo peak detectado
-                    fecha_peak_inf = datos.obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
-                
-                    #Se marcan en el grafico OHLC los peaks detectados
-                    for peak,col in zip(peak,columnas):
-                        fig_principal.add_trace(go.Scatter(
-                            x=[df["fecha"][j]for j in list(peak)],
-                            y=[df[col][j]for j in list(peak)],
-                            mode='markers',
-                            name= 'Peak',
-                            marker=dict(
-                                size=8,
-                                color='red',
-                                symbol='cross'
-                            ),
-                            showlegend=False
-                        ))
-            #Linea de control superior       
-            if click_linea_sup > 0 and linea_control_sup != None:
-                y = []
-
-                #Bucle que agrega una linea recta en el valor ingresado 
-                for i in range(len(df["fecha"])):
-                    y.append(float(linea_control_sup))
-                fig_principal.add_trace(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Linea Superior',showlegend=False))
-
-                # Calculo de peaks
-                if(float(linea_control_sup) > 0):
-                    peak = []
-                    columnas = ['min','max','open','close']
-
-                    # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
-                    peaks_inf = datos.peak(df['min'],linea_control_sup)
-                    peaks_sup = datos.peak(df['max'],linea_control_sup)
-                    peaks_ini = datos.peak(df['open'],linea_control_sup)
-                    peaks_fin = datos.peak(df['close'],linea_control_sup)
-
-                    peak.append(peaks_inf)
-                    peak.append(peaks_sup)
-                    peak.append(peaks_ini)
-                    peak.append(peaks_fin)    
-
-                    alert_sup = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
-                    alert_sup = str(alert_sup) + " peaks"
-                    #Obtine la fecha del ultimo peak detectado
-                    fecha_peak_sup = datos.obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
-
-                    #Se marcan en el grafico OHLC los peaks detectados
-                    for peak,col in zip(peak,columnas):
-                        fig_principal.add_trace(go.Scatter(
-                            x=[df["fecha"][j]for j in list(peak)],
-                            y=[df[col][j]for j in list(peak)],
-                            mode='markers',
-                            name= 'Peak',
-                            marker=dict(
-                                size=8,
-                                color='red',
-                                symbol='cross'
-                            ),
-                            showlegend=False
-                        ))
+            
         elif tipo_sensor == 'weather-station':
             # La variable df y dff contiene el dataframe que se utiliza para generar el graficos OHLC
             df = datos.datos_ace(fecha,ventana_tiempo,'temperatura')
 
             # Aqui se crea el grafico OHLC para la temperatura
-            fig_principal.add_trace(
+            trace_principal.append(
                 go.Ohlc(
                     x=df['fecha'],
                     open=df['open'],
@@ -817,6 +763,22 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                     )
                 )
 
+            fig_principal = go.Figure(data=trace_principal)
+            #Aqui se agregan las lineas de control
+            if (click_linea_inf > 0 and linea_control_inf != None) and (click_linea_sup > 0 and linea_control_sup != None):
+                trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                trace_linea_inf.extend(trace_linea_sup)
+                fig_principal = go.Figure(data=trace_linea_inf)
+
+            #Linea de control inferior
+            elif click_linea_inf > 0 and linea_control_inf != None:
+                trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',trace_principal,df,linea_control_inf,0)
+                fig_principal = go.Figure(data=trace_linea_inf)
+            #Linea de control superior       
+            elif click_linea_sup > 0 and linea_control_sup != None:
+                trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',trace_principal,df,0,linea_control_sup)
+                fig_principal = go.Figure(data=trace_linea_sup)
 
             fig_principal.update(layout_xaxis_rangeslider_visible=False)
             titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
@@ -826,93 +788,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
             #Se obtienen los datos de los indicadores resumen, en este caso pertenecientes a los datos de temperatura
             promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(df,'temperatura')
             
-            #Aqui se agregan las lineas de control
-            #Linea de control inferior
-            if click_linea_inf > 0 and linea_control_inf != None:
-                y = []
-
-                #Bucle que agrega una linea recta en el valor ingresado 
-                for i in range(len(df["fecha"])):
-                    y.append(float(linea_control_inf))
-                fig_principal.add_trace(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Linea Inferior',showlegend=False))
-                # Calculo de peaks
-                if(float(linea_control_inf) < 0):
-                    peak = []
-                    columnas = ['min','max','open','close']
-                    # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
-                    peaks_inf = datos.peak(-(df['min']),-(linea_control_inf))
-                    peaks_sup = datos.peak(-(df['max']),-(linea_control_inf))
-                    peaks_ini = datos.peak(-(df['open']),-(linea_control_inf))
-                    peaks_fin = datos.peak(-(df['close']),-(linea_control_inf))
-
-                    peak.append(peaks_inf)
-                    peak.append(peaks_sup)
-                    peak.append(peaks_ini)
-                    peak.append(peaks_fin)    
-
-                    alert_inf = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
-                    alert_inf = str(alert_inf) + " peaks"
-                    #Obtine la fecha del ultimo peak detectado
-                    fecha_peak_inf = datos.obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
-                
-                    #Se marcan en el grafico OHLC los peaks detectados
-                    for peak,col in zip(peak,columnas):
-                        fig_principal.add_trace(go.Scatter(
-                            x=[df["fecha"][j]for j in list(peak)],
-                            y=[df[col][j]for j in list(peak)],
-                            mode='markers',
-                            name= 'Peak',
-                            marker=dict(
-                                size=8,
-                                color='red',
-                                symbol='cross'
-                            ),
-                            showlegend=False
-                        ))
-            #Linea de control superior       
-            if click_linea_sup > 0 and linea_control_sup != None:
-                y = []
-
-                #Bucle que agrega una linea recta en el valor ingresado 
-                for i in range(len(df["fecha"])):
-                    y.append(float(linea_control_sup))
-                fig_principal.add_trace(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Linea Superior',showlegend=False))
-
-                # Calculo de peaks
-                if(float(linea_control_sup) > 0):
-                    peak = []
-                    columnas = ['min','max','open','close']
-
-                    # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
-                    peaks_inf = datos.peak(df['min'],linea_control_sup)
-                    peaks_sup = datos.peak(df['max'],linea_control_sup)
-                    peaks_ini = datos.peak(df['open'],linea_control_sup)
-                    peaks_fin = datos.peak(df['close'],linea_control_sup)
-
-                    peak.append(peaks_inf)
-                    peak.append(peaks_sup)
-                    peak.append(peaks_ini)
-                    peak.append(peaks_fin)    
-
-                    alert_sup = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
-                    alert_sup = str(alert_sup) + " peaks"
-                    #Obtine la fecha del ultimo peak detectado
-                    fecha_peak_sup = datos.obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
-
-                    #Se marcan en el grafico OHLC los peaks detectados
-                    for peak,col in zip(peak,columnas):
-                        fig_principal.add_trace(go.Scatter(
-                            x=[df["fecha"][j]for j in list(peak)],
-                            y=[df[col][j]for j in list(peak)],
-                            mode='markers',
-                            name= 'Peak',
-                            marker=dict(
-                                size=8,
-                                color='red',
-                                symbol='cross'
-                            ),
-                            showlegend=False
-                        ))
+            
         return promedio,maximo,minimo,fecha_ultimo_max,fecha_ultimo_min,count_max,count_min,alert_sup,alert_inf,fecha_peak_sup,fecha_peak_inf,fig_principal
 
     #else:

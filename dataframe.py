@@ -8,6 +8,7 @@ import base64
 import collections
 import unicodedata
 import plotly
+import plotly.graph_objects as go
 from datetime import datetime as dt
 from datetime import timedelta as td
 
@@ -73,6 +74,128 @@ def datos_ace(fecha_inicio,freq,sensor):
     #Se crea el dataframe con todos los valores extraidos
     new_df = pd.DataFrame(list(zip(list(rango_horas), avg_,min_,max_,open_,close_)),columns =['fecha', sensor,'min','max','open','close'])
     return new_df
+
+
+
+# Funcion que calcula la fecha del ultimo peak detectado 
+def obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin):
+    list_df = df['fecha'].tolist()
+    tmp = []
+    for i in peaks_inf:
+        tmp.append(list_df[i])
+    for j in peaks_sup:
+        tmp.append(list_df[j])
+    for k in peaks_ini:
+        tmp.append(list_df[k])
+    for l in peaks_fin:
+        tmp.append(list_df[l])
+    tmp.sort(reverse = True)
+    if len(tmp) == 0:
+        return 'N/A'
+    else:
+        return str(tmp[0])
+
+# Funcion que calcula todos los peaks, que se encuentran sobre una linea de control, ya sea inferior o superior
+def peak_(df,linea_control):
+    lista = df.tolist()
+    peaks = []
+    for i in range(len(lista)):
+        if(float(lista[i]) >= float(linea_control)):
+            peaks.append(i)
+    return peaks
+
+def lineas_control(tipo,trace,df,linea_control_inf,linea_control_sup):
+     
+    if tipo == 'inf':
+        trace_linea_inf = []
+        trace_linea_inf.extend(trace)
+        y = []
+        #Bucle que agrega una linea recta en el valor ingresado 
+        for i in range(len(df["fecha"])):
+            y.append(float(linea_control_inf))
+        trace_linea_inf.append(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Línea Inferior',showlegend=False))
+        # Calculo de peaks
+        if(float(linea_control_inf) < 0):
+            
+            peak = []
+            columnas = ['min','max','open','close']
+            # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
+            peaks_inf = peak_(-(df['min']),-(linea_control_inf))
+            peaks_sup = peak_(-(df['max']),-(linea_control_inf))
+            peaks_ini = peak_(-(df['open']),-(linea_control_inf))
+            peaks_fin = peak_(-(df['close']),-(linea_control_inf))
+
+            peak.append(peaks_inf)
+            peak.append(peaks_sup)
+            peak.append(peaks_ini)
+            peak.append(peaks_fin)    
+
+            alert_inf = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
+            alert_inf = str(alert_inf) + " peaks"
+            #Obtine la fecha del ultimo peak detectado
+            fecha_peak_inf = obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
+                
+            #Se marcan en el grafico OHLC los peaks detectados
+            for peak,col in zip(peak,columnas):
+                trace_linea_inf.append(go.Scatter(
+                    x=[df["fecha"][j]for j in list(peak)],
+                    y=[df[col][j]for j in list(peak)],
+                    mode='markers',
+                    name= 'Peak',
+                    marker=dict(
+                        size=8,
+                        color='red',
+                        symbol='cross'
+                    ),
+                    showlegend=False
+                ))
+        return trace_linea_inf,alert_inf,fecha_peak_inf
+
+    elif tipo == 'sup':
+        trace_linea_sup = []
+        trace_linea_sup.extend(trace)
+        y = []
+        #Bucle que agrega una linea recta en el valor ingresado 
+        for i in range(len(df["fecha"])):
+            y.append(float(linea_control_sup))
+        trace_linea_sup.append(go.Scattergl(x=df["fecha"], y=y, mode='lines',line=dict(color='purple'),name='Línea Superior',showlegend=False))
+        # Calculo de peaks
+        if(float(linea_control_sup) > 0):
+            
+            peak = []
+            columnas = ['min','max','open','close']
+            # se calculan los peaks para cada tipo de dato que contine el grafico OHLC
+            peaks_inf = peak_(df['min'],linea_control_sup)
+            peaks_sup = peak_(df['max'],linea_control_sup)
+            peaks_ini = peak_(df['open'],linea_control_sup)
+            peaks_fin = peak_(df['close'],linea_control_sup)
+
+            peak.append(peaks_inf)
+            peak.append(peaks_sup)
+            peak.append(peaks_ini)
+            peak.append(peaks_fin)    
+
+            alert_sup = len(peaks_inf) + len(peaks_sup) + len(peaks_ini) + len(peaks_fin)
+            alert_sup = str(alert_sup) + " peaks"
+            #Obtine la fecha del ultimo peak detectado
+            fecha_peak_sup = obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin)
+                
+            #Se marcan en el grafico OHLC los peaks detectados
+            for peak,col in zip(peak,columnas):
+                trace_linea_sup.append(go.Scatter(
+                    x=[df["fecha"][j]for j in list(peak)],
+                    y=[df[col][j]for j in list(peak)],
+                    mode='markers',
+                    name= 'Peak',
+                    marker=dict(
+                        size=8,
+                        color='red',
+                        symbol='cross'
+                    ),
+                    showlegend=False
+                ))
+        return trace_linea_sup,alert_sup,fecha_peak_sup
+
 
 #Funcion para generar rangos de datos para el histograma circular
 def rangos (tmp1):
@@ -266,33 +389,6 @@ def datos_mini_container(df,sensor):
     fecha_ultimo_min = str(df_min['fecha'][len(df_min['fecha'])-1])
 
     return promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min
-
-# Funcion que calcula todos los peaks, que se encuentran sobre una linea de control, ya sea inferior o superior
-def peak(df,linea_control):
-    lista = df.tolist()
-    peaks = []
-    for i in range(len(lista)):
-        if(float(lista[i]) >= float(linea_control)):
-            peaks.append(i)
-    return peaks
-
-# Funcion que calcula la fecha del ultimo peak detectado 
-def obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin):
-    list_df = df['fecha'].tolist()
-    tmp = []
-    for i in peaks_inf:
-        tmp.append(list_df[i])
-    for j in peaks_sup:
-        tmp.append(list_df[j])
-    for k in peaks_ini:
-        tmp.append(list_df[k])
-    for l in peaks_fin:
-        tmp.append(list_df[l])
-    tmp.sort(reverse = True)
-    if len(tmp) == 0:
-        return 'N/A'
-    else:
-        return str(tmp[0])
     
 # Funcion que crea el dataframe para una cajita del grafico boxplot, ya que por cada una de ellas se seleccionan 300 datos que son el 
 # promedio de un rango de tiempo, este rango de tiempo depende de la frecuencia que puede ser 12seg, 288seg, 2016seg y 4032seg
@@ -375,8 +471,8 @@ def fecha_titulo(fecha_inicial,freq):
 def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensor_multi,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores):
     
     #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html
-    def fig_to_uri(fig):
-        return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
+    #def fig_to_uri(fig):
+    #    return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
 
     #Trasforma la figura en un Div para luego ser incrustada en el html, para no utilizar ORCA 
     #def fig_to_div(fig):
@@ -387,8 +483,9 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         logo = base64.b64encode(imageFile.read()).decode('utf-8')
     
     # se guardan los garficos en formato uri en una lista
-    graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
+    #graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
     #graficos =  [fig_to_div(fig_principal),fig_to_div(fig_sec1),fig_to_div(fig_sec2)]
+    graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
 
     # si es mas de 1 sensor en la visualizacion, se guardan los nombres en un string
     sensores_multi = ''
@@ -447,7 +544,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Datos obtenidos de los sensores <strong>"'+str(sensores_multi)+'"</strong>, la ventana de tiempo seleccionada para las visualizaciones es de <strong>"'+str(titulo_OHLC(ventana_tiempo))+'"</strong>, el dia '+str(dia_datos)+' de '+str(mes_datos)+' de '+str(ano_datos)+' desde las '+str(crear_hora(int(hora)))+' a las '+str(crear_hora(int(hora) + 1))+' .</p>'
         '<p>&nbsp;</p>'
     )
-    '''
+
     img = (''
         '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:850;"> {image} </div></p>'
         '')
@@ -462,7 +559,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     img2 = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="600" height="400" /></p>'
         '')
-
+    '''
     encabezado = (
         '<html lang="es">'
         '<head>'
