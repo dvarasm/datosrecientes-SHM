@@ -1074,7 +1074,22 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
     if n_clicks >= 0:
         fecha_ini_titulo,fecha_fin_titulo = datos.fecha_titulo(fecha,ventana_tiempo) 
         #Dependiendo del tipo de sensor se crean visualizaciones distintas
-        if tipo_sensor == 'acelerometro':
+        if tipo_sensor == 'weather-station':
+            
+            #Aqui se crea el histograma circular que contine datos de la direccion y velocidad del viento
+            dir = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'dir_viento')['dir_viento'].tolist()
+            vel = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'vel_viento')['vel_viento'].tolist()
+
+            tmp1 = collections.Counter(dir)
+            ini,fin = datos.rangos(tmp1)
+
+            rr,tt = datos.datos_por_rango(pd.DataFrame({'dir_viento': dir,'vel_viento':vel}),ini,fin)
+            dff = pd.DataFrame({'Dirección': tt,'Velocidad (m/s)':rr})
+            fig_2 = px.bar_polar(dff, r="Velocidad (m/s)", theta="Dirección",color_discrete_sequence= px.colors.sequential.Plasma_r)
+            titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
+
+            fig_2.update_layout(title={'text':"Dirección y Velocidad (m/s) del viento durante "+str(titulo_OHLC)+" "})
+        elif tipo_sensor == 'acelerometro':
             if cantidad_sensores == '1-sensor':
                 # La variable df contiene el dataframe que se utiliza para generar el histograma
                 # Aqui se crea el histograma
@@ -1120,23 +1135,6 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
             
                 fig_2.update_layout(title="Frecuencia de datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+"<br>durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Frecuencia (N° de Datos)"}, xaxis={"title": "Aceleración (cm/s²)"},bargap=0.1,)
 
-
-        elif tipo_sensor == 'weather-station':
-            
-            #Aqui se crea el histograma circular que contine datos de la direccion y velocidad del viento
-            dir = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'dir_viento')['dir_viento'].tolist()
-            vel = datos.datos_ace(dt(2008,4,1,0,38,3),ventana_tiempo,'vel_viento')['vel_viento'].tolist()
-
-            tmp1 = collections.Counter(dir)
-            ini,fin = datos.rangos(tmp1)
-
-            rr,tt = datos.datos_por_rango(pd.DataFrame({'dir_viento': dir,'vel_viento':vel}),ini,fin)
-            dff = pd.DataFrame({'Dirección': tt,'Velocidad (m/s)':rr})
-            fig_2 = px.bar_polar(dff, r="Velocidad (m/s)", theta="Dirección",color_discrete_sequence= px.colors.sequential.Plasma_r)
-            titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
-
-            fig_2.update_layout(title={'text':"Dirección y Velocidad (m/s) del viento durante "+str(titulo_OHLC)+" "})
-        
         return fig_2
 
     #else:
