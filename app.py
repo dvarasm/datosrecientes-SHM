@@ -718,7 +718,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
 
                 #Variables que contienen los datos a mostrar en los indicadores de promedio, minimo y maximo
                 promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(new_df,new_sensor)
-
+                df = pd.concat(list_df, axis=0,ignore_index=True)
                 fig_principal = go.Figure(data=trace_principal)
                 #Aqui se agregan las lineas de control
                 if (click_linea_inf > 0 and linea_control_inf != None) and (click_linea_sup > 0 and linea_control_sup != None):
@@ -740,8 +740,6 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
             
                 fig_principal.update_layout(title={'text':"Datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+", durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")"},yaxis={"title": "Aceleración (cm/s²)"})
-
-                df = pd.concat(list_df, axis=0,ignore_index=True)
 
             
         elif tipo_sensor == 'weather-station':
