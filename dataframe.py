@@ -683,7 +683,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     #Funcion que abre el pdf recien creado
     
     #en chrome
-    webbrowser.get('google-chrome').open_new_tab('reporte.pdf')
+    webbrowser.get('google-chrome').open_new_tab('./reporte.pdf')
     
     #en navegador o lector de pdf por defecto
     #webbrowser.open_new_tab('reporte.pdf')
