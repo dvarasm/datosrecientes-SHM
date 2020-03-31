@@ -1133,6 +1133,7 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
             rr,tt = datos.datos_por_rango(pd.DataFrame({'dir_viento': dir,'vel_viento':vel}),ini,fin)
             dff = pd.DataFrame({'Dirección': tt,'Velocidad (m/s)':rr})
             fig_2 = px.bar_polar(dff, r="Velocidad (m/s)", theta="Dirección",color_discrete_sequence= px.colors.sequential.Plasma_r)
+            titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
 
             fig_2.update_layout(title={'text':"Dirección y Velocidad (m/s) del viento durante "+str(titulo_OHLC)+" "})
         
