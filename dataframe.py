@@ -104,11 +104,10 @@ def peak_(df,linea_control):
             peaks.append(i)
     return peaks
 
-def lineas_control(tipo,trace,df,linea_control_inf,linea_control_sup):
+def lineas_control(tipo,df,linea_control_inf,linea_control_sup):
      
     if tipo == 'inf':
         trace_linea_inf = []
-        trace_linea_inf.extend(trace)
         y = []
         #Bucle que agrega una linea recta en el valor ingresado 
         for i in range(len(df["fecha"])):
@@ -153,7 +152,6 @@ def lineas_control(tipo,trace,df,linea_control_inf,linea_control_sup):
 
     elif tipo == 'sup':
         trace_linea_sup = []
-        trace_linea_sup.extend(trace)
         y = []
         #Bucle que agrega una linea recta en el valor ingresado 
         for i in range(len(df["fecha"])):
@@ -475,8 +473,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     #    return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
 
     #Trasforma la figura en un Div para luego ser incrustada en el html, para no utilizar ORCA 
-    #def fig_to_div(fig):
-    #	return plotly.offline.plot(fig,config={"displayModeBar": False},show_link=False,include_plotlyjs=False,output_type='div')
+    def fig_to_div(fig):
+    	return plotly.offline.plot(fig,config={"displayModeBar": False},show_link=False,include_plotlyjs=False,output_type='div')
 
     #Transforma el logo en uri, para poder ser visualizados en html
     with open("./assets/SHM-logo2.bmp", "rb") as imageFile:
@@ -484,8 +482,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     
     # se guardan los garficos en formato uri en una lista
     #graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
-    #graficos =  [fig_to_div(fig_principal),fig_to_div(fig_sec1),fig_to_div(fig_sec2)]
-    graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
+    graficos =  [fig_to_div(fig_principal),fig_to_div(fig_sec1),fig_to_div(fig_sec2)]
+    #graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
 
     # si es mas de 1 sensor en la visualizacion, se guardan los nombres en un string
     sensores_multi = ''
@@ -678,12 +676,12 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             reporte = encabezado + resumen + linea + linea_sup + imagenes + fecha
 
     #Funcion que transforma el html en pdf
-    pdfkit.from_string(reporte,'/app/reporte.pdf')
+    pdfkit.from_string(reporte,'reporte.pdf')
 
     #Funcion que abre el pdf recien creado
     
     #en chrome
-    webbrowser.get('google-chrome').open_new_tab('./app/reporte.pdf')
+    webbrowser.get('google-chrome').open_new_tab('reporte.pdf')
     
     #en navegador o lector de pdf por defecto
     #webbrowser.open_new_tab('reporte.pdf')
