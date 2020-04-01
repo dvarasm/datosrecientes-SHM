@@ -32,6 +32,10 @@ coneccion = psycopg2.connect(user="qlhalplmkayixb",
 #La frecuencia, la cual corresponde al intervalo para generar el rango de fechas (12seg,288seg,2016seg y 4032seg)
 #Y por ultimo requiere del nombre del sensor
 def datos_ace(fecha_inicio,freq,sensor):
+    if (str(fecha_inicio).split(sep=' ')[0]== '2008-01-01') and (str(fecha_inicio).split(sep=' ')[1] == '00:00:00'):
+        new_fecha = pd.read_sql_query("SELECT fecha FROM public."+str(sensor)+" ORDER BY id_lectura ASC LIMIT 1",coneccion)['fecha'][0]
+        new_hora = str(new_fecha).split(sep=' ')[1]
+        fecha_inicio = dt.strptime(str(str(fecha_inicio).split(sep=' ')[0]+' '+new_hora),'%Y-%m-%d %H:%M:%S')
     periodo = 301 #Cantidad de fechas a generar, es 301 porque se necesitan tuplas de fechas para calcular los valores
     avg_,min_,max_,open_,close_ = [],[],[],[],[]
     rango_horas = list(pd.date_range(fecha_inicio, periods=periodo, freq=freq).strftime('%Y-%m-%d %H:%M:%S'))
@@ -41,6 +45,7 @@ def datos_ace(fecha_inicio,freq,sensor):
         query1 = ("SELECT avg(lectura) as "+str(sensor)+", min(lectura) as min, max(lectura) as max "
              "FROM public."+str(sensor)+" "
              "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
+        
         #La query2 entrega el primer elemento de la base de datos al inicio del rango de tiempo y el ultimo elemento al final del rango de tiempo
         query2 = ("(SELECT lectura as open "
              "FROM public."+str(sensor)+" "
@@ -51,6 +56,7 @@ def datos_ace(fecha_inicio,freq,sensor):
              "FROM public."+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i+1])+"' "
              "Order BY id_lectura DESC LIMIT 1)")
+        print(query2)
         tmp = pd.read_sql_query(query1,coneccion)
         tmp1 = pd.read_sql_query(query2,coneccion)
         #comprobaciones si por algun motivo en la fecha en que se busca un valor no existe, este reemplaza por 0
@@ -74,7 +80,6 @@ def datos_ace(fecha_inicio,freq,sensor):
     #Se crea el dataframe con todos los valores extraidos
     new_df = pd.DataFrame(list(zip(list(rango_horas), avg_,min_,max_,open_,close_)),columns =['fecha', sensor,'min','max','open','close'])
     return new_df
-
 
 
 # Funcion que calcula la fecha del ultimo peak detectado 

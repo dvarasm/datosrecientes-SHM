@@ -636,7 +636,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
             if cantidad_sensores == '1-sensor':
                 # La variable df contiene el dataframe que se utiliza para generar los graficos OHLC e histograma
                 start_time = time()
-                df = datos.datos_ace(fecha,ventana_tiempo,sensor)
+                df = datos.datos_ace(dt(2008,1,1,0,37,44),ventana_tiempo,sensor)
                 elapsed_time = time() - start_time
                 print("Tiempo Transcurrido crear DF: %0.1f seconds." % elapsed_time)
                 # Aqui se crea el grafico OHLC
