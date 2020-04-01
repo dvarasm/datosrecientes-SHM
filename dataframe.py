@@ -45,7 +45,6 @@ def datos_ace(fecha_inicio,freq,sensor):
         query1 = ("SELECT avg(lectura) as "+str(sensor)+", min(lectura) as min, max(lectura) as max "
              "FROM public."+str(sensor)+" "
              "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
-        
         #La query2 entrega el primer elemento de la base de datos al inicio del rango de tiempo y el ultimo elemento al final del rango de tiempo
         query2 = ("(SELECT lectura as open "
              "FROM public."+str(sensor)+" "
@@ -56,7 +55,6 @@ def datos_ace(fecha_inicio,freq,sensor):
              "FROM public."+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i+1])+"' "
              "Order BY id_lectura DESC LIMIT 1)")
-        print(query2)
         tmp = pd.read_sql_query(query1,coneccion)
         tmp1 = pd.read_sql_query(query2,coneccion)
         #comprobaciones si por algun motivo en la fecha en que se busca un valor no existe, este reemplaza por 0
@@ -473,22 +471,21 @@ def fecha_titulo(fecha_inicial,freq):
 #Funcion para generar los reportes, se tiene una plantilla en html, la cual se transforma en pdf
 def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensor_multi,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores):
     
-    #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html
+    #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html 
+    #Escritorio
     #def fig_to_uri(fig):
     #    return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
-
-    #Trasforma la figura en un Div para luego ser incrustada en el html, para no utilizar ORCA 
-    def fig_to_div(fig):
-    	return plotly.offline.plot(fig,config={"displayModeBar": False},show_link=False,include_plotlyjs=False,output_type='div')
 
     #Transforma el logo en uri, para poder ser visualizados en html
     with open("./assets/SHM-logo2.bmp", "rb") as imageFile:
         logo = base64.b64encode(imageFile.read()).decode('utf-8')
     
     # se guardan los garficos en formato uri en una lista
+    #escritorio
     #graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
-    graficos =  [fig_to_div(fig_principal),fig_to_div(fig_sec1),fig_to_div(fig_sec2)]
-    #graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
+
+    #heroku
+    graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
 
     # si es mas de 1 sensor en la visualizacion, se guardan los nombres en un string
     sensores_multi = ''
@@ -548,6 +545,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         '<p>&nbsp;</p>'
     )
 
+    #heroku
     img = (''
         '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:850;"> {image} </div></p>'
         '')
@@ -555,6 +553,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     img2 = (''
         '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:600;"> {image} </div></p>'
         '')
+
+    #Escritorio
     '''
     img = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="850" height="400" /></p>'
@@ -594,6 +594,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Valor m&iacute;nimo: <strong>'+str(valor_min)+'</strong>,   Repeticiones: <strong>'+str(num_valor_min)[10:len(str(num_valor_min))]+'</strong>,   Fecha de &uacute;ltima repetici&oacute;n: <strong>'+str(dia_min)+'-'+str(mes_min)+'-'+str(ano_min)+' '+str(fecha_valor_min).split(sep=' ')[1]+'</strong></p>'
         '<p>&nbsp;</p>'
     )
+    
+    #version con indicadores descritos en parrafos
     '''
     resumen = (
         '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;"><strong>Resumen de Indicadores</strong></p>'
@@ -623,6 +625,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks inferiores: <strong>'+str(alert_inf)+'</strong></p>' 
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak inferior detectado: <strong>'+str(dia_inf)+'-'+str(mes_inf)+'-'+str(ano_inf)+' '+str(fecha_alert_inf).split(sep=' ')[1]+'</strong></p>'
             )
+        #version con lineas de control descritos en parrafos
         '''
         linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_sup)+' de '+str(mes_sup)+' de '+str(ano_sup)+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
         linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_inf)+' de '+str(mes_inf)+' de '+str(ano_inf)+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
@@ -633,6 +636,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks superiores: <strong>'+str(alert_sup)+'</strong></p>' 
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak superior detectado: <strong>'+str(dia_sup)+'-'+str(mes_sup)+'-'+str(ano_sup)+' '+str(fecha_alert_sup).split(sep=' ')[1]+'</strong></p>'
             )
+        #version con lineas de control descritos en parrafos
         #linea_sup = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control superior ubicada en el valor '+str(valor_linea_control_sup)+', existen '+str(alert_sup)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_sup)+' de '+str(mes_sup)+' de '+str(ano_sup)+' a las '+str(fecha_alert_sup).split(sep=' ')[1]+'.')
     elif valor_linea_control_inf != None:
         linea_inf = (
@@ -640,12 +644,23 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Peaks inferiores: <strong>'+str(alert_inf)+'</strong></p>' 
             '<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">Fecha &uacute;ltimo peak inferior detectado: <strong>'+str(dia_inf)+'-'+str(mes_inf)+'-'+str(ano_inf)+' '+str(fecha_alert_inf).split(sep=' ')[1]+'</strong></p>'
             )
+        #version con lineas de control descritos en parrafos
         #linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_inf)+' de '+str(mes_inf)+' de '+str(ano_inf)+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
 
+    #heroku
+    fecha = (
+        '<p style="text-align: justify; padding-left: 30px; padding-right: 30px;"><span style="font-family:arial,helvetica,sans-serif;">Reporte del obtenido el '+str(time.strftime("%d/%m/%y"))+' a las&nbsp;'+str(time.strftime("%H:%M:%S"))+'</p>'
+        '<a style="text-align: center;" href="#" onclick="window.print();return false;" title="Click para guardar o imprimir reporte"><strong>Guardar/Imprimir Reporte</strong></a>'
+        '</body>'
+        '</html>')
+    
+    #escritorio
+    '''
     fecha = (
         '<p style="text-align: justify; padding-left: 30px; padding-right: 30px;"><span style="font-family:arial,helvetica,sans-serif;">Reporte del obtenido el '+str(time.strftime("%d/%m/%y"))+' a las&nbsp;'+str(time.strftime("%H:%M:%S"))+'</p>'
         '</body>'
         '</html>')
+    '''    
 
     #Se agregan las imagenes a la plantilla html
     imagenes = ''
@@ -680,13 +695,20 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         elif valor_linea_control_sup != None:
             reporte = encabezado + resumen + linea + linea_sup + imagenes + fecha
 
-    #Funcion que transforma el html en pdf
-    pdfkit.from_string(reporte,'reporte.pdf')
+    #Funcion que transforma el html en pdf para la version de escritorio o servidor con linux (necesita instalar dependencias extra no compatibles con heroku)
+    #pdfkit.from_string(reporte,'reporte.pdf')
+
+    #Forma de generar el reporte para la version del subsistema montado en heroku
+    text_file = open("reporte.html", "wt")
+    n = text_file.write(reporte)
+    text_file.close()
 
     #Funcion que abre el pdf recien creado
     
     #en chrome
-    webbrowser.get('google-chrome').open_new_tab('reporte.pdf')
+    #webbrowser.get('google-chrome').open_new_tab('reporte.html') #heroku
+    #webbrowser.get('google-chrome').open_new_tab('reporte.pdf') #escritorio
     
     #en navegador o lector de pdf por defecto
-    #webbrowser.open_new_tab('reporte.pdf')
+    webbrowser.open_new_tab('reporte.html')#heroku
+    #webbrowser.open_new_tab('reporte.pdf')#escritorio
