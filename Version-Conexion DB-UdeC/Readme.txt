@@ -1,0 +1,1 @@
+Para ejecutar esta version solo reemplazar el archivo dataframe.py por el que contiene esta carpeta

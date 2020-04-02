@@ -13,19 +13,10 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 
 # Contiene las credenciales para realizar la conección con postgresql
-'''
-coneccion = psycopg2.connect(user="postgres",
-                                  password="ferrari1",
-                                  host="localhost",
-                                  port="5432",
-                                  database="shm_puentes")
-'''
-coneccion = psycopg2.connect(user="qlhalplmkayixb",
-                                  password="08c3ce3637d78695ab14e09427d7392181c78e92061de836782c1f966b4e3c6d",
-                                  host="ec2-3-234-169-147.compute-1.amazonaws.com",
-                                  port="5432",
-                                  database="d2kgv5span6j91")
+#coneccion = psycopg2.connect(user="postgres",password="ferrari1",host="localhost",port="5432",database="shm_puentes")
 
+coneccion = psycopg2.connect(user="clandero",password="219UNIx2",host="152.74.52.187",port="5432",database="prototipo_shm")
+esquema = ['public.','inventario_puentes.','llacolen.']
 
 #Funcion para crear el dataframe a utilizar en el grafico OHLC, ademas el valor de la columna avg se utiliza para para el histograma
 #La funcion requiere de una fecha inicial, para calcular a partir de esta los rangos de fechas
@@ -33,7 +24,7 @@ coneccion = psycopg2.connect(user="qlhalplmkayixb",
 #Y por ultimo requiere del nombre del sensor
 def datos_ace(fecha_inicio,freq,sensor):
     if (str(fecha_inicio).split(sep=' ')[0]== '2008-01-01') and (str(fecha_inicio).split(sep=' ')[1] == '00:00:00'):
-        new_fecha = pd.read_sql_query("SELECT fecha FROM public."+str(sensor)+" ORDER BY id_lectura ASC LIMIT 1",coneccion)['fecha'][0]
+        new_fecha = pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+str(sensor)+" ORDER BY fecha ASC LIMIT 1",coneccion)['fecha'][0]
         new_hora = str(new_fecha).split(sep=' ')[1]
         fecha_inicio = dt.strptime(str(str(fecha_inicio).split(sep=' ')[0]+' '+new_hora),'%Y-%m-%d %H:%M:%S')
     periodo = 301 #Cantidad de fechas a generar, es 301 porque se necesitan tuplas de fechas para calcular los valores
@@ -43,18 +34,18 @@ def datos_ace(fecha_inicio,freq,sensor):
         #consultas a la base de datos
         #La query1 entrega el avg,min y max de un rango de tiempo
         query1 = ("SELECT avg(lectura) as "+str(sensor)+", min(lectura) as min, max(lectura) as max "
-             "FROM public."+str(sensor)+" "
+             "FROM "+str(esquema[2])+str(sensor)+" "
              "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
         #La query2 entrega el primer elemento de la base de datos al inicio del rango de tiempo y el ultimo elemento al final del rango de tiempo
         query2 = ("(SELECT lectura as open "
-             "FROM public."+str(sensor)+" "
+             "FROM "+str(esquema[2])+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i])+"' "
-             "Order BY id_lectura ASC LIMIT 1)"
+             "Order BY fecha ASC LIMIT 1)"
              "UNION ALL"
              "(SELECT lectura as close "
-             "FROM public."+str(sensor)+" "
+             "FROM "+str(esquema[2])+str(sensor)+" "
              "Where fecha ='"+str(rango_horas[i+1])+"' "
-             "Order BY id_lectura DESC LIMIT 1)")
+             "Order BY fecha DESC LIMIT 1)")
         tmp = pd.read_sql_query(query1,coneccion)
         tmp1 = pd.read_sql_query(query2,coneccion)
         #comprobaciones si por algun motivo en la fecha en que se busca un valor no existe, este reemplaza por 0
@@ -78,7 +69,6 @@ def datos_ace(fecha_inicio,freq,sensor):
     #Se crea el dataframe con todos los valores extraidos
     new_df = pd.DataFrame(list(zip(list(rango_horas), avg_,min_,max_,open_,close_)),columns =['fecha', sensor,'min','max','open','close'])
     return new_df
-
 
 # Funcion que calcula la fecha del ultimo peak detectado 
 def obtener_fecha_alerta(df,peaks_inf,peaks_sup,peaks_ini,peaks_fin):
@@ -243,7 +233,10 @@ def datos_por_rango(df,inicial,final):
 #Dependiendo de los sensores disponibles, se muestra la alternativa de cambiar el tipo de visualizacion de 1-sensor o varios-sensores
 def cantidad_sensores_visualizar(tipo_sensor):
     if tipo_sensor == 'acelerometro':
-        cantidad_sensores = {"1 Sensor":"1-sensor","Varios Sensores":"varios-sensores"}
+        if len(nombres_ace().keys()) > 1:
+            cantidad_sensores = {"1 Sensor":"1-sensor","Varios Sensores":"varios-sensores"}
+        else:
+            cantidad_sensores = {"1 Sensor":"1-sensor"}
     else:
         cantidad_sensores = {"1 Sensor":"1-sensor"}
     return dict(cantidad_sensores)
@@ -275,16 +268,12 @@ def crear_hora(hora):
 
 # Funcion que retorna los nombres de los acelerometros disponibles a seleccionar en el Dropdown
 def nombres_ace():
-    df = pd.read_sql_query('''SELECT DISTINCT nombre_sensor FROM public.sensores WHERE tipo_sensor = 'Acelerómetro';''',coneccion)
-    nombres = df['nombre_sensor'].tolist()
+    df = pd.read_sql_query("SELECT DISTINCT nombre_tabla FROM "+str(esquema[1])+"sensores_instalados WHERE nombre_tabla like '%.acelerometro%';",coneccion)
+    nombres = df['nombre_tabla'].tolist()
     nombres = sorted(nombres, key=lambda x: int("".join([i for i in x if i.isdigit()])))
     nombres_sensores = {}
     for nom in nombres:
-        nombres_sensores[str(elimina_tildes(nom)).lower().replace(' ', '_') ] = str(nom)
-    #nombres_ace = {"acelerometro_1": "Acelerómetro 1", "acelerometro_2": "Acelerómetro 2","acelerometro_3": "Acelerómetro 3","acelerometro_4": "Acelerómetro 4", 
-    #        "acelerometro_5": "Acelerómetro 5","acelerometro_6": "Acelerómetro 6","acelerometro_7": "Acelerómetro 7", "acelerometro_8": "Acelerómetro 8",
-    #        "acelerometro_9": "Acelerómetro 9","acelerometro_10": "Acelerómetro 10", "acelerometro_11": "Acelerómetro 11","acelerometro_12": "Acelerómetro 12",
-    #        "acelerometro_13": "Acelerómetro 13", "acelerometro_14": "Acelerómetro 14","acelerometro_bi_1": "Acelerómetro biaxial 1","acelerometro_bi_2": "Acelerómetro biaxial 2"}
+        nombres_sensores[nom.split('.')[1]] = str(nom.split('.')[1])
     return dict(nombres_sensores)
 
 # Funcion que retorna los nombres de las weather station disponibles a seleccionar en el Dropdown
@@ -314,32 +303,31 @@ def elimina_tildes(cadena):
 
 # Funcion que retorna los nombres de los tipos de sensores disponibles a seleccionar en el Dropdown
 def tipos_sensores():
-    df = pd.read_sql_query('''SELECT DISTINCT tipo_sensor FROM public.sensores;''',coneccion)
-    tipos = df['tipo_sensor'].tolist()
+    df = pd.read_sql_query("SELECT DISTINCT nombre FROM "+str(esquema[1])+"tipos_de_sensor;",coneccion)
+    tipos = df['nombre'].tolist()
     tipos.sort(reverse=False)
     tipos_sensores = {}
-    for tipo in tipos:
-        tipos_sensores[str(elimina_tildes(tipo)).lower().replace(' ', '-') ] = str(tipo)
-    #tipos_sensores = {"acelerometro":"Acelerómetro","weather-station":"Weather Station","strain-gauge":"Strain Gauge","inclinometro":"Inclinómetro","lvdt":"LVDT"}
-    #tipos_sensores = {"acelerometro":"Acelerómetro","weather-station":"Weather Station"}
+    #for tipo in tipos:
+    #    tipos_sensores[str(elimina_tildes(tipo)).lower().replace(' ', '-') ] = str(tipo)
+    tipos_sensores[str(elimina_tildes(tipos[0])).lower().replace(' ', '-') ] = str(tipos[0])
     return dict(tipos_sensores)
 
 # Funcion que retorna la minima fecha que existe en la base de datos
 def fecha_inicial(tipo_sensor):
     if tipo_sensor == 'acelerometro':
-        return pd.read_sql_query('''SELECT fecha FROM public.acelerometro_1 ORDER BY id_lectura ASC LIMIT 1''',coneccion)['fecha'][0]
+        return pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+"acelerometro_5493257 ORDER BY fecha ASC LIMIT 1 ",coneccion)['fecha'][0]
     elif tipo_sensor == 'weather-station':
-        return pd.read_sql_query('''SELECT fecha FROM public.temperatura ORDER BY id_lectura ASC LIMIT 1''',coneccion)['fecha'][0]
+        return pd.read_sql_query("SELECT fecha FROM "+str(esquema[0])+"temperatura ORDER BY id_lectura ASC LIMIT 1 ",coneccion)['fecha'][0]
 
 # Funcion que retorna la ultima fecha que existe en la base de datos
 def fecha_final(tipo_sensor):
     if tipo_sensor == 'acelerometro':
-        fecha =  pd.read_sql_query('''SELECT fecha FROM public.acelerometro_1 ORDER BY id_lectura DESC LIMIT 1''',coneccion)['fecha'][0]
+        fecha =  pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+"acelerometro_5493257 ORDER BY fecha DESC LIMIT 1 ",coneccion)['fecha'][0]
         if fecha == None:
             fecha = dt (2008,1,16,23,18,28)
         return fecha
     elif tipo_sensor == 'weather-station':
-        fecha = pd.read_sql_query('''SELECT fecha FROM public.temperatura ORDER BY id_lectura DESC LIMIT 1''',coneccion)['fecha'][0]
+        fecha = pd.read_sql_query("SELECT fecha FROM "+str(esquema[0])+"temperatura ORDER BY id_lectura DESC LIMIT 1 ",coneccion)['fecha'][0]
         if fecha == None:
             fecha = dt (2008,4,1,0,38,36)
         return fecha
@@ -353,11 +341,11 @@ def horas_del_dia(sensor,fecha_inicial):
     fecha_final = fecha_inicial + td(days=1)
     if sensor == 'weather-station_1':
         horas =  pd.read_sql_query("select distinct extract(hour from  fecha) as horas "
-                                   "from public.temperatura "
+                                   "from "+str(esquema[0])+"temperatura "
                                    "where fecha between '"+str(fecha_inicial)+"' and '"+str(fecha_final)+"';",coneccion)
     else:
         horas =  pd.read_sql_query("select distinct extract(hour from  fecha) as horas "
-                                   "from public."+str(sensor)+" "
+                                   "from "+str(esquema[2])+str(sensor)+" "
                                    "where fecha between '"+str(fecha_inicial)+"' and '"+str(fecha_final)+"';",coneccion)
     horas = list(map(int, horas['horas'].tolist()))
     horas.sort()
@@ -390,7 +378,7 @@ def datos_mini_container(df,sensor):
     fecha_ultimo_min = str(df_min['fecha'][len(df_min['fecha'])-1])
 
     return promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min
-    
+
 # Funcion que crea el dataframe para una cajita del grafico boxplot, ya que por cada una de ellas se seleccionan 300 datos que son el 
 # promedio de un rango de tiempo, este rango de tiempo depende de la frecuencia que puede ser 12seg, 288seg, 2016seg y 4032seg
 # la obtencion de estos datos se realiza de la misma forma que para el grafico OHLC
@@ -408,7 +396,7 @@ def datos_box(fecha_inicio,freq,sensor):
     rango_horas = list(pd.date_range(fecha_inicio, periods=periodo, freq=freq).strftime('%Y-%m-%d %H:%M:%S'))
     for i in range(len(rango_horas)-1):
         query1 = ("SELECT avg(lectura) as "+str(sensor)+" "
-                  "FROM public."+str(sensor)+" "
+                  "FROM "+str(esquema[2])+str(sensor)+" "
                   "Where fecha between '"+str(rango_horas[i])+"' and '"+str(rango_horas[i+1])+"' ;")
         df = pd.read_sql_query(query1,coneccion)[sensor]
         for j in range(1):
@@ -473,8 +461,8 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     
     #Transforma las figuras (graficos generados) en uri, para poder ser visualizados en html 
     #Escritorio
-    #def fig_to_uri(fig):
-    #    return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
+    def fig_to_uri(fig):
+        return base64.b64encode(fig.to_image(format="png")).decode('utf-8')
 
     #Transforma el logo en uri, para poder ser visualizados en html
     with open("./assets/SHM-logo2.bmp", "rb") as imageFile:
@@ -482,10 +470,10 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     
     # se guardan los garficos en formato uri en una lista
     #escritorio
-    #graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
+    graficos = [fig_to_uri(fig_principal),fig_to_uri(fig_sec1),fig_to_uri(fig_sec2)]
 
     #heroku
-    graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
+    #graficos = [fig_principal.to_html(config={"displayModeBar": False}),fig_sec1.to_html(config={"displayModeBar": False}),fig_sec2.to_html(config={"displayModeBar": False})]
 
     # si es mas de 1 sensor en la visualizacion, se guardan los nombres en un string
     sensores_multi = ''
@@ -546,6 +534,7 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     )
 
     #heroku
+    '''
     img = (''
         '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:850;"> {image} </div></p>'
         '')
@@ -553,16 +542,16 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     img2 = (''
         '<p><div style="display: block; margin-left: auto; margin-right: auto; height:400; width:600;"> {image} </div></p>'
         '')
-
+	'''
     #Escritorio
-    '''
+    
     img = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="850" height="400" /></p>'
         '')
     img2 = (''
         '<p><img style="display: block; margin-left: auto; margin-right: auto;" src="data:image/png;base64,{image}" alt="Gr&aacute;fico Principal" width="600" height="400" /></p>'
         '')
-    '''
+    
     encabezado = (
         '<html lang="es">'
         '<head>'
@@ -648,19 +637,20 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
         #linea_inf = ('<p style="text-align: justify;"><span style="font-family:arial,helvetica,sans-serif;">L&iacute;nea de control inferior ubicada en el valor '+str(valor_linea_control_inf)+', existen '+str(alert_inf)+' que superan este umbral y el &uacute;ltimo peak detectado fue el '+str(dia_inf)+' de '+str(mes_inf)+' de '+str(ano_inf)+' a las '+str(fecha_alert_inf).split(sep=' ')[1]+'.')
 
     #heroku
+    '''
     fecha = (
         '<p style="text-align: justify; padding-left: 30px; padding-right: 30px;"><span style="font-family:arial,helvetica,sans-serif;">Reporte del obtenido el '+str(time.strftime("%d/%m/%y"))+' a las&nbsp;'+str(time.strftime("%H:%M:%S"))+'</p>'
         '<a style="text-align: center;" href="#" onclick="window.print();return false;" title="Click para guardar o imprimir reporte"><strong>Guardar/Imprimir Reporte</strong></a>'
         '</body>'
         '</html>')
-    
-    #escritorio
     '''
+    #escritorio
+    
     fecha = (
         '<p style="text-align: justify; padding-left: 30px; padding-right: 30px;"><span style="font-family:arial,helvetica,sans-serif;">Reporte del obtenido el '+str(time.strftime("%d/%m/%y"))+' a las&nbsp;'+str(time.strftime("%H:%M:%S"))+'</p>'
         '</body>'
         '</html>')
-    '''    
+       
 
     #Se agregan las imagenes a la plantilla html
     imagenes = ''
@@ -696,12 +686,12 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
             reporte = encabezado + resumen + linea + linea_sup + imagenes + fecha
 
     #Funcion que transforma el html en pdf para la version de escritorio o servidor con linux (necesita instalar dependencias extra no compatibles con heroku)
-    #pdfkit.from_string(reporte,'reporte.pdf')
+    pdfkit.from_string(reporte,'reporte.pdf')
 
     #Forma de generar el reporte para la version del subsistema montado en heroku
-    text_file = open("reporte.html", "w")
-    n = text_file.write(reporte)
-    text_file.close()
+    #text_file = open("reporte.html", "w")
+    #n = text_file.write(reporte)
+    #text_file.close()
 
     #Funcion que abre el pdf recien creado
     
@@ -710,5 +700,5 @@ def generar_reportes(fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,va
     #webbrowser.get('google-chrome').open_new_tab('reporte.pdf') #escritorio
     
     #en navegador o lector de pdf por defecto
-    webbrowser.open_new_tab('reporte.html')#heroku
-    #webbrowser.open_new_tab('reporte.pdf')#escritorio
+    #webbrowser.open_new_tab('reporte.html')#heroku
+    webbrowser.open_new_tab('reporte.pdf')#escritorio
