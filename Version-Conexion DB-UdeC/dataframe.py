@@ -23,7 +23,7 @@ esquema = ['public.','inventario_puentes.','llacolen.']
 #La frecuencia, la cual corresponde al intervalo para generar el rango de fechas (12seg,288seg,2016seg y 4032seg)
 #Y por ultimo requiere del nombre del sensor
 def datos_ace(fecha_inicio,freq,sensor):
-    if (str(fecha_inicio).split(sep=' ')[0]== '2008-01-01') and (str(fecha_inicio).split(sep=' ')[1] == '00:00:00'):
+    if ((str(fecha_inicio).split(sep=' ')[0]== '2008-01-01') or (str(fecha_inicio).split(sep=' ')[0]== '2008-04-01')) and (str(fecha_inicio).split(sep=' ')[1] == '00:00:00'):
         new_fecha = pd.read_sql_query("SELECT fecha FROM "+str(esquema[2])+str(sensor)+" ORDER BY fecha ASC LIMIT 1",coneccion)['fecha'][0]
         new_hora = str(new_fecha).split(sep=' ')[1]
         fecha_inicio = dt.strptime(str(str(fecha_inicio).split(sep=' ')[0]+' '+new_hora),'%Y-%m-%d %H:%M:%S')
