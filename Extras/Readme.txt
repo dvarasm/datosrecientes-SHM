@@ -1,0 +1,1 @@
+Esta carpeta contiene un estracto de los datos del pte chino, ademas diferentes programas en python que ayudan a leer los archivos del pte chino y crear los dataframe para poder ser subidos a una base de datos y contiene el esquema de base de datos que se utilizo en la version local y en heroku.
