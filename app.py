@@ -88,12 +88,19 @@ app.layout = html.Div([
                                 className="control_label",
                                 style={'textAlign': 'center','font-size':'20px'}
                             ),
-                            dcc.Dropdown(
-                                id="elegir-tipo-sensor", 
-                                multi=False, 
-                                options=[{"label": value , "value": key}for key,value in datos.tipos_sensores().items()],
-                                value=str(list(datos.tipos_sensores().keys())[0]),
-                            ),
+                            html.Div([
+                                dcc.Loading(
+                                    id="carga-elegir-tipo-sen", 
+                                    children=[
+                                        dcc.Dropdown(
+                                            id="elegir-tipo-sensor", 
+                                            multi=False, 
+                                            options=[{"label": value , "value": key}for key,value in datos.tipos_sensores().items()],
+                                            value=str(list(datos.tipos_sensores().keys())[0]),
+                                        ),
+                                    ],type="default"
+                                )
+                            ]),
                             html.Br(),
                             html.P(
                                 "Seleccione Sensor",
@@ -101,20 +108,30 @@ app.layout = html.Div([
                                 style={'textAlign': 'center','font-size':'20px'}
                             ),
                             html.Div([
-                                dcc.Dropdown(
-                                    id="elegir-sensor", 
-                                    multi=False, 
-                                    options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
-                                    value=str(list(datos.nombres_ace().keys())[0]),
-                                ),
+                                dcc.Loading(
+                                    id="carga-elegir-sen", 
+                                    children=[
+                                        dcc.Dropdown(
+                                            id="elegir-sensor", 
+                                            multi=False, 
+                                            options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
+                                            value=str(list(datos.nombres_ace().keys())[0]),
+                                        ),
+                                    ],type="default"
+                                )
                             ],id='sensor-uni'),
                             html.Div([
-                                dcc.Dropdown(
-                                    id="elegir-sensor-multi", 
-                                    multi=True, 
-                                    options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
-                                    value=str(list(datos.nombres_ace().keys())[0]),
-                                ),
+                                dcc.Loading(
+                                    id="carga-elegir-sen-multi", 
+                                    children=[
+                                        dcc.Dropdown(
+                                            id="elegir-sensor-multi", 
+                                            multi=True, 
+                                            options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
+                                            value=str(list(datos.nombres_ace().keys())[0]),
+                                        ),
+                                    ],type="default"
+                                )
                             ],style={'display':'none'},id='sensor-multi'),
                             html.Br(),
                             html.P(
@@ -123,14 +140,19 @@ app.layout = html.Div([
                                 style={'textAlign': 'center','font-size':'20px'}
                             ),
                             html.Div([
-                                dcc.DatePickerSingle(
-                                    id='elegir-fecha',
-                                    display_format='DD/MM/YYYY',
-                                    min_date_allowed=datos.fecha_inicial('Acelerómetro'),
-                                    max_date_allowed=datos.fecha_final('Acelerómetro'),
-                                    initial_visible_month=datos.fecha_inicial('Acelerómetro'),
-                                    date = datos.fecha_inicial('Acelerómetro')
-                                ),
+                                dcc.Loading(
+                                    id="carga-elegir-fecha", 
+                                    children=[
+                                        dcc.DatePickerSingle(
+                                            id='elegir-fecha',
+                                            display_format='DD/MM/YYYY',
+                                            min_date_allowed=datos.fecha_inicial('Acelerómetro'),
+                                            max_date_allowed=datos.fecha_final('Acelerómetro'),
+                                            initial_visible_month=datos.fecha_inicial('Acelerómetro'),
+                                            date = datos.fecha_inicial('Acelerómetro')
+                                        ),
+                                    ],type="default"
+                                )
                             ],style={'textAlign': 'center'}),
                             html.Br(),
                             html.P(
@@ -139,13 +161,18 @@ app.layout = html.Div([
                                 style={'textAlign': 'center','font-size':'20px'}
                             ),
                             html.Div([
-                                dcc.RadioItems(
-                                    id="ventana-tiempo",
-                                    options=[{"label": key , "value": value}for key,value in datos.ventana_tiempo(3).items()],
-                                    value=str(list(datos.ventana_tiempo(3).values())[0]),
-                                    labelStyle={"display": "inline-block"},
-                                    className="dcc_control",
-                                ),
+                                dcc.Loading(
+                                    id="carga-ventana-tiempo", 
+                                    children=[
+                                        dcc.RadioItems(
+                                            id="ventana-tiempo",
+                                            options=[{"label": key , "value": value}for key,value in datos.ventana_tiempo(3).items()],
+                                            value=str(list(datos.ventana_tiempo(3).values())[0]),
+                                            labelStyle={"display": "inline-block"},
+                                            className="dcc_control",
+                                        ),
+                                    ],type="default"
+                                )  
                             ],style={'textAlign': 'center'}),
                             html.Br(),
                             html.Div([
@@ -154,22 +181,29 @@ app.layout = html.Div([
                                     className="control_label",
                                     style={'textAlign': 'center','font-size':'20px'}
                                 ),
-                                dcc.Slider(
-                                    id='horas-disponibles',
-                                    min=0,
-                                    max=23,
-                                    value=0,
-                                    step=None,
-                                    dots=True,
-                                    updatemode='drag',
-                                    included=False
-                                ),
+                                html.Div([
+                                    dcc.Loading(
+                                        id="carga-horas-disponibles", 
+                                        children=[
+                                            dcc.Slider(
+                                                id='horas-disponibles',
+                                                min=0,
+                                                max=23,
+                                                value=0,
+                                                step=None,
+                                                dots=True,
+                                                updatemode='drag',
+                                                included=False
+                                            ),
+                                        ],type="default"
+                                    )
+                                ]),  
                                 html.P(
                                     "Hora Seleccionada: ---",
                                     id='hora-disponible-seleccionada', 
                                     className="control_label",
                                     style={'textAlign': 'center','font-size':'18px'}
-                                )
+                                )    
                             ],id='contenedor-horas-disponibles'),
                             html.Br(),
                             html.Div([
@@ -324,7 +358,8 @@ app.layout = html.Div([
                             id="carga-aler-sup", 
                             children=[
                                 html.P("N° Alertas",style={'color': 'Black','font-weight': 'bold'}),
-                                html.P("Línea de Control Superior",style={'color': 'Black','font-weight': 'bold'}),
+                                html.P("Línea de Control",style={'color': 'Black','font-weight': 'bold'}),
+                                html.P("Superior",style={'color': 'Black','font-weight': 'bold'}),
                                 html.H4('---',id="alert-sup"),
                                 html.P("Última Alerta:"),
                                 html.P("---",id='fecha-alert-sup'),
@@ -337,7 +372,8 @@ app.layout = html.Div([
                             id="carga-aler-inf",
                             children=[
                                 html.P("N° Alertas",style={'color': 'Black','font-weight': 'bold'}),
-                                html.P("Línea de Control Inferior",style={'color': 'Black','font-weight': 'bold'}),
+                                html.P("Línea de Control",style={'color': 'Black','font-weight': 'bold'}),
+                                html.P("Inferior",style={'color': 'Black','font-weight': 'bold'}),
                                 html.H4('---',id="alert-inf"),
                                 html.P("Última Alerta:"),
                                 html.P("---",id='fecha-alert-inf'),
