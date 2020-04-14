@@ -8,6 +8,7 @@ import base64
 import collections
 import unicodedata
 import plotly
+import os
 import plotly.graph_objects as go
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -20,12 +21,17 @@ coneccion = psycopg2.connect(user="postgres",
                                   port="5432",
                                   database="shm_puentes")
 '''
+'''
 coneccion = psycopg2.connect(user="qlhalplmkayixb",
                                   password="08c3ce3637d78695ab14e09427d7392181c78e92061de836782c1f966b4e3c6d",
                                   host="ec2-3-234-169-147.compute-1.amazonaws.com",
                                   port="5432",
                                   database="d2kgv5span6j91")
+'''
 
+DATABASE_URL = os.environ['DATABASE_URL']
+
+coneccion = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 #Funcion para crear el dataframe a utilizar en el grafico OHLC, ademas el valor de la columna avg se utiliza para para el histograma
 #La funcion requiere de una fecha inicial, para calcular a partir de esta los rangos de fechas
