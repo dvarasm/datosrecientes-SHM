@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 from datetime import datetime as dt
 from datetime import timedelta as td
 
-# Contiene las credenciales para realizar la conección con postgresql
+# Contiene las credenciales para realizar la conección con postgresql de forma local
 '''
 coneccion = psycopg2.connect(user="postgres",
                                   password="ferrari1",
@@ -21,6 +21,7 @@ coneccion = psycopg2.connect(user="postgres",
                                   port="5432",
                                   database="shm_puentes")
 '''
+#conexion con database heroku con credenciales(por seguridad deja de funcionar despues de varios usos)
 '''
 coneccion = psycopg2.connect(user="qlhalplmkayixb",
                                   password="08c3ce3637d78695ab14e09427d7392181c78e92061de836782c1f966b4e3c6d",
@@ -28,9 +29,8 @@ coneccion = psycopg2.connect(user="qlhalplmkayixb",
                                   port="5432",
                                   database="d2kgv5span6j91")
 '''
-
+#Conexion con database heroku sin credenciales
 DATABASE_URL = os.environ['DATABASE_URL']
-
 coneccion = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 #Funcion para crear el dataframe a utilizar en el grafico OHLC, ademas el valor de la columna avg se utiliza para para el histograma
