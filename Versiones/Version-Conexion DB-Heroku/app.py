@@ -54,18 +54,18 @@ app.layout = html.Div([
                     id="title",
                     ),
                     html.Div([
-                        html.A(
-                            dcc.Loading(
-                                id="carga-reportes",
-                                children=[
+                        dcc.Loading(
+                            id="carga-reportes",
+                            children=[
+                                html.A(
                                     html.Button(
                                         "Generar Reporte", 
                                         id="boton-generar-reporte",
                                         n_clicks = 0,
                                         style={'color': 'Black', 'backgroundColor':'lavender','font-size':'17px'}
                                     ),
-                                ]
-                            )
+                                )
+                            ]
                         )
                     ],
                     className="one-third column",
@@ -95,8 +95,8 @@ app.layout = html.Div([
                                         dcc.Dropdown(
                                             id="elegir-tipo-sensor", 
                                             multi=False, 
-                                            options=[{"label": key , "value": value}for key,value in datos.tipos_sensores().items()],
-                                            value=str(datos.tipos_sensores().get(list(datos.tipos_sensores().keys())[0])),
+                                            options=[{"label": value , "value": key}for key,value in datos.tipos_sensores().items()],
+                                            value=str(list(datos.tipos_sensores().keys())[0]),
                                         ),
                                     ],type="default"
                                 )
@@ -114,8 +114,8 @@ app.layout = html.Div([
                                         dcc.Dropdown(
                                             id="elegir-sensor", 
                                             multi=False, 
-                                            options=[{"label": key , "value": value}for key,value in datos.nombres_sensores('acelerometro').items()],
-                                            value=str(datos.nombres_sensores('acelerometro').get(list(datos.nombres_sensores('acelerometro').keys())[0])),
+                                            options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
+                                            value=str(list(datos.nombres_ace().keys())[0]),
                                         ),
                                     ],type="default"
                                 )
@@ -125,49 +125,14 @@ app.layout = html.Div([
                                     id="carga-elegir-sen-multi", 
                                     children=[
                                         dcc.Dropdown(
-                                            id="elegir-sensor-multi",
+                                            id="elegir-sensor-multi", 
                                             multi=True, 
-                                            options=[{"label": key , "value": value}for key,value in datos.nombres_sensores('acelerometro').items()],
-                                            value=str(datos.nombres_sensores('acelerometro').get(list(datos.nombres_sensores('acelerometro').keys())[0])),
+                                            options=[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],
+                                            value=str(list(datos.nombres_ace().keys())[0]),
                                         ),
                                     ],type="default"
                                 )
                             ],style={'display':'none'},id='sensor-multi'),
-                            html.P(
-                                "Seleccione Ejes",
-                                className="control_label",
-                                style={'textAlign': 'center','font-size':'20px'}
-                            ),
-                            html.Div([
-                                dcc.Loading(
-                                    id="carga-elegir-eje", 
-                                    children=[
-                                        dcc.Checklist(
-                                            id="elegir-eje",  
-                                            options=[{'label': 'X', 'value': 'x'},
-                                                    {'label': 'Y', 'value': 'y'},
-                                                    {'label': 'Z', 'value': 'z'}],
-                                            value=['x'],
-                                            labelStyle={'display': 'inline-block'}
-                                        ),
-                                    ],type="default"
-                                )
-                            ],style={'textAlign': 'center','display':'inline'},id='ejes'),
-                            html.Div([
-                                dcc.Loading(
-                                    id="carga-elegir-eje-multi", 
-                                    children=[
-                                        dcc.RadioItems(
-                                            id="elegir-eje-multi",  
-                                            options=[{'label': 'X', 'value': 'x'},
-                                                    {'label': 'Y', 'value': 'y'},
-                                                    {'label': 'Z', 'value': 'z'}],
-                                            value='x',
-                                            labelStyle={'display': 'inline-block'}
-                                        ),
-                                    ],type="default"
-                                )
-                            ],style={'display':'none'},id='ejes-multi'),
                             html.Br(),
                             html.P(
                                 "Seleccione Fecha Inicial: ",
@@ -181,10 +146,10 @@ app.layout = html.Div([
                                         dcc.DatePickerSingle(
                                             id='elegir-fecha',
                                             display_format='DD/MM/YYYY',
-                                            min_date_allowed=datos.fecha_inicial('acelerometro','x'),
-                                            max_date_allowed=datos.fecha_final('acelerometro','x'),
-                                            initial_visible_month=datos.fecha_inicial('acelerometro','x'),
-                                            date = datos.fecha_inicial('acelerometro','x')
+                                            min_date_allowed=datos.fecha_inicial('Acelerómetro'),
+                                            max_date_allowed=datos.fecha_final('Acelerómetro'),
+                                            initial_visible_month=datos.fecha_inicial('Acelerómetro'),
+                                            date = datos.fecha_inicial('Acelerómetro')
                                         ),
                                     ],type="default"
                                 )
@@ -224,7 +189,7 @@ app.layout = html.Div([
                                                 id='horas-disponibles',
                                                 min=0,
                                                 max=23,
-                                                value=int(datos.horas_del_dia(str(datos.nombres_sensores('acelerometro').get(list(datos.nombres_sensores('acelerometro').keys())[0])),datos.fecha_inicial('acelerometro','x'))[1]),
+                                                value=0,
                                                 step=None,
                                                 dots=True,
                                                 updatemode='drag',
@@ -450,7 +415,6 @@ app.layout = html.Div([
             html.Div([
                 dcc.Loading(
                     id="carga-grafico-2",
-                    loading_state={'is_loading':True},
                     children=[
                         dcc.Graph(
                             id='grafico-2'
@@ -477,12 +441,6 @@ app.layout = html.Div([
             ],id='cuadro-grafico-3',className="row flex-display",
         ),
 '''
-#@app.callback(Output('boton-generar-reporte', 'disabled'),
-#              [Input('carga-grafico-principal', 'loading_state'),Input('carga-grafico-1', 'loading_state'),Input('carga-grafico-2', 'loading_state')])
-
-#def enable_button_reporte(fig_principal,fig_1,fig_2):
-#    print(type(fig_principal))
-#    return False
 
 @app.callback(Output('indicador-multi','style'),
               [Input('boton-aceptar', 'n_clicks')],[State('cantidad-sensores','value')])
@@ -495,23 +453,40 @@ def update_info(clicks,cantidad_sensores):
             return {'display':'inline'}
 
 # Esta funcion cambia segun el tipo de sensor, los sensores disponibles y ademas si en las propiedades se selecciona tener mas de 1 sensor por grafica cambia el dropdown a multiple
-@app.callback([Output('elegir-sensor', 'value'),Output('elegir-sensor', 'options'),Output('elegir-sensor-multi', 'value'),Output('elegir-sensor-multi', 'options'),Output('sensor-multi', 'style'),Output('sensor-uni','style'),Output('ejes-multi', 'style'),Output('ejes','style')],
+@app.callback([Output('elegir-sensor', 'value'),Output('elegir-sensor', 'options'),Output('elegir-sensor-multi', 'value'),Output('elegir-sensor-multi', 'options'),Output('sensor-multi', 'style'),Output('sensor-uni','style')],
               [Input('cantidad-sensores','value'),Input('elegir-tipo-sensor','value')])
 
 def lista_sensores(cantidad_sensores,tipo_sensor):
     if cantidad_sensores == '1-sensor':
-        return str(datos.nombres_sensores(tipo_sensor).get(list(datos.nombres_sensores(tipo_sensor).keys())[0])),[{"label": key , "value": value}for key,value in datos.nombres_sensores(tipo_sensor).items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'},{'textAlign': 'center','display':'none'},{'textAlign': 'center','display':'inline'}
+        if tipo_sensor == 'acelerometro':
+            return str(list(datos.nombres_ace().keys())[0]),[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'}
+        elif tipo_sensor == 'lvdt':
+            return str(list(datos.nombres_lvdt().keys())[0]),[{"label": value , "value": key}for key,value in datos.nombres_lvdt().items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'}
+        elif tipo_sensor == 'weather-station':
+            return str(list(datos.nombres_ws().keys())[0]),[{"label": value , "value": key}for key,value in datos.nombres_ws().items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'}
+        elif tipo_sensor == 'strain-gauge':
+            return str(list(datos.nombres_sg().keys())[0]),[{"label": value , "value": key}for key,value in datos.nombres_sg().items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'}
+        elif tipo_sensor == 'inclinometro':
+            return str(list(datos.nombres_in().keys())[0]),[{"label": value , "value": key}for key,value in datos.nombres_in().items()],'',[{"label":'',"value":''}],{'display':'none'},{'display':'inline'}
     elif cantidad_sensores == 'varios-sensores':
-        return '',[{"label":'',"value":''}],[str(datos.nombres_sensores(tipo_sensor).get(list(datos.nombres_sensores(tipo_sensor).keys())[0]))],[{"label": key , "value": value}for key,value in datos.nombres_sensores(tipo_sensor).items()],{'display':'inline'},{'display':'none'},{'textAlign': 'center','display':'inline'},{'textAlign': 'center','display':'none'}
+        if tipo_sensor == 'acelerometro':
+            return '',[{"label":'',"value":''}],[str(list(datos.nombres_ace().keys())[0])],[{"label": value , "value": key}for key,value in datos.nombres_ace().items()],{'display':'inline'},{'display':'none'}
+        elif tipo_sensor == 'lvdt':
+            return '',[{"label":'',"value":''}],[str(list(datos.nombres_lvdt().keys())[0])],[{"label": value , "value": key}for key,value in datos.nombres_lvdt().items()],{'display':'inline'},{'display':'none'}
+        elif tipo_sensor == 'weather-station':
+            return '',[{"label":'',"value":''}],[str(list(datos.nombres_ws().keys())[0])],[{"label": value , "value": key}for key,value in datos.nombres_ws().items()],{'display':'inline'},{'display':'none'}
+        elif tipo_sensor == 'strain-gauge':
+            return '',[{"label":'',"value":''}],[str(list(datos.nombres_sg().keys())[0])],[{"label": value , "value": key}for key,value in datos.nombres_sg().items()],{'display':'inline'},{'display':'none'}
+        elif tipo_sensor == 'inclinometro':
+            return '',[{"label":'',"value":''}],[str(list(datos.nombres_in().keys())[0])],[{"label": value , "value": key}for key,value in datos.nombres_in().items()],{'display':'inline'},{'display':'none'}
 
 #Esta funcion cambia las fechas del selector de fechas deacuerdo a las disponibles en cada sensor
 @app.callback([Output('elegir-fecha','min_date_allowed'),Output('elegir-fecha','max_date_allowed'),Output('elegir-fecha','initial_visible_month'),Output('elegir-fecha','date')],
               [Input('elegir-tipo-sensor','value')])
 
 def update_fecha(tipo_sensor):
-
-    ini = datos.fecha_inicial(tipo_sensor,'x')
-    fin = datos.fecha_final(tipo_sensor,'x')
+    ini = datos.fecha_inicial(tipo_sensor)
+    fin = datos.fecha_final(tipo_sensor)
     return ini,fin,ini,ini
 
 # Esta funcion muestra el rangeslider de horas, siempre que este seleccionado la opcion de "1 hora" 
@@ -539,10 +514,17 @@ def horas_disponibles_sensor(sensor,sensor_multi,fecha_ini,cantidad_sensores):
         else:
             horas,min,max = datos.horas_del_dia(sensor,fecha)
         marks = {}
-
         for i in horas:
-            if i == 0 or i == 6 or i == 12 or i == 18 or i == 23:
-                marks[i]= {'label': datos.crear_hora(i)[:5],'style': {'color': 'black'}}
+            if i == 0:
+                marks[i]= {'label': '00:00','style': {'color': 'black'}}
+            elif i == 6:
+                marks[i]= {'label': '06:00','style': {'color': 'black'}}
+            elif i == 12:
+                marks[i]= {'label': '12:00','style': {'color': 'black'}}
+            elif i == 18:
+                marks[i]= {'label': '18:00','style': {'color': 'black'}}
+            elif i == 23:
+                marks[i]= {'label': '23:00','style': {'color': 'black'}}
             else:
                 marks[i]= {'label': ' '}        
         return min,min,max,marks
@@ -553,8 +535,16 @@ def horas_disponibles_sensor(sensor,sensor_multi,fecha_ini,cantidad_sensores):
             horas,min,max = datos.horas_del_dia(sensor_multi[0],fecha)
         marks = {}
         for i in horas:
-            if i == 0 or i == 6 or i == 12 or i == 18 or i == 23:
-                marks[i]= {'label': datos.crear_hora(i)[:5],'style': {'color': 'black'}}
+            if i == 0:
+                marks[i]= {'label': '00:00','style': {'color': 'black'}}
+            elif i == 6:
+                marks[i]= {'label': '06:00','style': {'color': 'black'}}
+            elif i == 12:
+                marks[i]= {'label': '12:00','style': {'color': 'black'}}
+            elif i == 18:
+                marks[i]= {'label': '18:00','style': {'color': 'black'}}
+            elif i == 23:
+                marks[i]= {'label': '23:00','style': {'color': 'black'}}
             else:
                 marks[i]= {'label': ' '} 
         return min,min,max,marks
@@ -564,7 +554,12 @@ def horas_disponibles_sensor(sensor,sensor_multi,fecha_ini,cantidad_sensores):
              [Input('horas-disponibles', 'value')])
 
 def update_hora_seleccionada(hora):
-    hora_sel = 'Hora Seleccionada: '+datos.crear_hora(hora)[:5]
+    hora_sel = 'Hora Seleccionada: ---'
+    for i in range(24):
+        if hora == i and hora < 10:
+            hora_sel = 'Hora Seleccionada: 0'+str(i)+':00'
+        elif hora == i and hora > 9:
+            hora_sel = 'Hora Seleccionada: '+str(i)+':00'
     return hora_sel
 
 # Esta funcion cambia las opciones que se muestran en el radioitem cantidad de sensores a visualizar
@@ -579,12 +574,17 @@ def change_cantidad_sensores(tipo_sensor):
              [Input('elegir-fecha', 'date'),Input('elegir-tipo-sensor','value')])
 
 def change_ventana_tiempo(fecha_ini,tipo_sensor):
-
-    if fecha_ini == None:
-        fecha_ini = datos.fecha_inicial(tipo_sensor,'x')
+    fecha_fin = dt(2008,1,2,0,0,0)
+    if fecha_ini == None and fecha_fin == None:
+        fecha_ini = dt(2008,1,1,0,0,0)
+        fecha_fin = dt(2008,1,2,0,0,0)
+    elif fecha_ini == None:
+        fecha_ini = dt(2008,1,1,0,0,0)
+    elif fecha_fin == None:
+        fecha_fin = dt(2008,1,2,0,0,0)
     fecha_ini = str(fecha_ini)
     fecha_ini = dt.strptime(str(dt(int(fecha_ini[0:4]),int(fecha_ini[5:7]),int(fecha_ini[8:10]),0,0,0)),'%Y-%m-%d %H:%M:%S')
-    fecha_fin = datos.fecha_final(tipo_sensor,'x')
+    fecha_fin = datos.fecha_final(tipo_sensor)
     rango = datos.dias_entre_fechas(fecha_ini,fecha_fin)
     if rango > 13:
         return [{"label": key , "value": value}for key,value in datos.ventana_tiempo(3).items()],str(list(datos.ventana_tiempo(3).values())[0])
@@ -653,20 +653,17 @@ def disable_tipo_sensores(cantidad_sensores,click_agr_sup,click_agr_inf):
                Output('alert-inf','children'),Output('fecha-alert-sup','children'),Output('fecha-alert-inf','children'),Output('grafico-principal','figure')],
               [Input('boton-aceptar', 'n_clicks'),Input('boton-linea-sup', 'n_clicks'),Input('boton-linea-inf', 'n_clicks')],
               [State('cantidad-sensores','value'),State('horas-disponibles', 'value'),State('elegir-tipo-sensor','value'),State('elegir-sensor','value'),State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value'),
-               State('linea-control-sup','value'),State('linea-control-inf','value')],State('elegir-eje','value'),State('elegir-eje-multi','value'))
+               State('linea-control-sup','value'),State('linea-control-inf','value')])
 
-def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo,linea_control_sup,linea_control_inf,ejes,eje):
-
-    if len(ejes) < 1 :
-        ejes.append('x')
+def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo,linea_control_sup,linea_control_inf):
     if fecha != None:
-        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor,eje)).split(sep=' ')[0]):
+        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor)).split(sep=' ')[0]):
             #fecha = dt.strptime(str(str(fecha).split(sep='T')[0]) + ' ' + str(str(datos.fecha_inicial()).split(sep=' ')[1]),'%Y-%m-%d %H:%M:%S')
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
         else:
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
     else:
-        fecha = datos.fecha_inicial(tipo_sensor,eje)
+        fecha = dt(2008,1,1,0,0,0)
     #Se inicializan variables
     df = pd.DataFrame()
     fig_principal = go.Figure()
@@ -675,51 +672,27 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
     #Listas que conteneran cada trace generado por cada dataframe creado para poder visualizarlos en una grafica
     trace_principal = []
     if n_clicks >= 0:
-        fecha_ini_titulo,fecha_fin_titulo = datos.fecha_titulo(fecha,ventana_tiempo)
+        fecha_ini_titulo,fecha_fin_titulo = datos.fecha_titulo(fecha,ventana_tiempo) 
         #Dependiendo del tipo de sensor se crean visualizaciones distintas
         if tipo_sensor == 'acelerometro':
             if cantidad_sensores == '1-sensor':
                 # La variable df contiene el dataframe que se utiliza para generar los graficos OHLC e histograma
-                
-                new_df = pd.DataFrame()
-                list_df = []
+                start_time = time()
+                df = datos.datos_ace(fecha,ventana_tiempo,sensor)
+                elapsed_time = time() - start_time
+                print("Tiempo Transcurrido crear DF: %0.1f seconds." % elapsed_time)
+                # Aqui se crea el grafico OHLC
+                start_time = time()
+                trace_principal.append(go.Ohlc(x=df['fecha'],
+                    open=df['open'],
+                    high=df['max'],
+                    low=df['min'],
+                    close=df['close'],
+                    increasing_line_color= 'green', 
+                    decreasing_line_color= 'red',
+                    name=sensor,
+                    showlegend=False))
 
-                colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
-                          '#f58231', '#911eb4']
-                count = 0
-                new_count_de = 0
-                new_count_in = 1
-
-                for e in ejes:
-                    start_time = time()
-                    df = datos.datos_ace(fecha,ventana_tiempo,sensor,e)
-
-                    elapsed_time = time() - start_time
-                    print("Tiempo Transcurrido crear DF: %0.1f seconds." % elapsed_time)
-                    # Aqui se crea el grafico OHLC
-                    start_time = time()
-                    trace_principal.append(go.Ohlc(x=df['fecha'],
-                        open=df['open'],
-                        high=df['max'],
-                        low=df['min'],
-                        close=df['close'],
-                        increasing_line_color= colors[new_count_in], 
-                        decreasing_line_color= colors[new_count_de],
-                        name=str(datos.traductor_nombre(sensor)+' eje: '+str(e)),
-                        showlegend=True))
-                    count = count + 1
-                    new_count_in = new_count_in + 2
-                    new_count_de = new_count_de + 2
-                    
-                    new_df = df
-
-                    #lista de dataframe para generar los indicadores resumen
-                    list_df.append(df)
-
-                #Variables que contienen los datos a mostrar en los indicadores de promedio, minimo y maximo
-                promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(new_df,sensor)
-
-                df = pd.concat(list_df, axis=0,ignore_index=True)
                 fig_principal = go.Figure(data=trace_principal)
                 #Aqui se agregan las lineas de control
                 if (click_linea_inf > 0 and linea_control_inf != None) and (click_linea_sup > 0 and linea_control_sup != None):
@@ -728,7 +701,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                     trace_linea_inf.extend(trace_linea_sup)
                     trace_principal.extend(trace_linea_inf)
                     fig_principal = go.Figure(data=trace_principal)
-                
+
                 #Linea de control inferior
                 elif click_linea_inf > 0 and linea_control_inf != None:
                     trace_linea_inf,alert_inf,fecha_peak_inf = datos.lineas_control('inf',df,linea_control_inf,0)
@@ -739,32 +712,20 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                     trace_linea_sup,alert_sup,fecha_peak_sup = datos.lineas_control('sup',df,0,linea_control_sup)
                     trace_principal.extend(trace_linea_sup)
                     fig_principal = go.Figure(data=trace_principal)
-
+                
                 fig_principal.update(layout_xaxis_rangeslider_visible=False)
-
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
-
-                fig_principal.update_layout(title={'text':"Datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+" del "+str(datos.traductor_nombre(sensor))+" durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")"},yaxis={"title": "Aceleración (cm/s²)"})
+                fig_principal.update_layout(title={'text':"Datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+" del "+str(datos.nombres_ace()[sensor])+" durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")"},yaxis={"title": "Aceleración (cm/s²)"})
 
                 elapsed_time = time() - start_time
                 print("Tiempo Transcurrido crear OHLC: %0.1f seconds." % elapsed_time)
 
-                
-
+                #Variables que contienen los datos a mostrar en los indicadores de promedio, minimo y maximo
+                promedio,maximo,minimo,count_max,count_min,fecha_ultimo_max,fecha_ultimo_min = datos.datos_mini_container(df,sensor)
             else:
                 
                 #colores para las graficas
-                colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
-                          '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
-                          '#bcf60c', '#fabebe', '#008080', '#e6beff', 
-                          '#9a6324', '#fffac8', '#800000', '#aaffc3', 
-                          '#808000', '#ffd8b1', '#000075', '#808080', 
-                          '#ffffff', '#000000', '#e6194b', '#3cb44b', 
-                          '#ffe119', '#4363d8', '#f58231', '#911eb4', 
-                          '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', 
-                          '#008080', '#e6beff', '#9a6324', '#fffac8', 
-                          '#800000', '#aaffc3', '#808000', '#ffd8b1', 
-                          '#000075', '#808080', '#ffffff', '#000000']
+                colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000']
                 count = 0
                 new_count_de = 0
                 new_count_in = 1
@@ -774,8 +735,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
 
                 #por cada sensor seleccionado se crean df 
                 for sen in sensor_multi:
-
-                    df = datos.datos_ace(fecha,ventana_tiempo,sen,eje)
+                    df = datos.datos_ace(fecha,ventana_tiempo,sen)
                     
                     #trace para el grafico OHLC
                     trace_principal.append(
@@ -788,7 +748,7 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
                             increasing_line_color= colors[new_count_in], 
                             decreasing_line_color= colors[new_count_de],
                             showlegend=True,
-                            name= datos.traductor_nombre(sen)
+                            name= sen
                             )
                         )
 
@@ -887,20 +847,17 @@ def update_grafico_principal(n_clicks,click_linea_sup,click_linea_inf,cantidad_s
 @app.callback(Output('grafico-1','figure'),
               [Input('boton-aceptar', 'n_clicks')],
               [State('cantidad-sensores','value'),State('horas-disponibles', 'value'),State('elegir-tipo-sensor','value'),State('elegir-sensor','value'),
-               State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value'),State('elegir-eje','value'),State('elegir-eje-multi','value')])
+               State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value')])
 
-def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo,ejes,eje):
-    if len(ejes) < 1 :
-        ejes.append('x')
-
+def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo):
     if fecha != None:
-        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor,eje)).split(sep=' ')[0]):
+        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor)).split(sep=' ')[0]):
             #fecha = dt.strptime(str(str(fecha).split(sep='T')[0]) + ' ' + str(str(datos.fecha_inicial()).split(sep=' ')[1]),'%Y-%m-%d %H:%M:%S')
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
         else:
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
     else:
-        fecha = datos.fecha_inicial(tipo_sensor,eje)
+        fecha = dt(2008,1,1,0,0,0)
     #Se inicializan variables
     df = pd.DataFrame()
     fig_1 = go.Figure()
@@ -909,6 +866,11 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
         #Dependiendo del tipo de sensor se crean visualizaciones distintas
         if tipo_sensor == 'acelerometro':
             if cantidad_sensores == '1-sensor':
+                # La variable df contiene el dataframe que se utiliza para generar los graficos OHLC e histograma
+                start_time = time()
+                df = datos.datos_ace(fecha,ventana_tiempo,sensor)
+                elapsed_time = time() - start_time
+                print("Tiempo Transcurrido crear DF: %0.1f seconds." % elapsed_time)
 
                 #Aqui se crea el grafico boxplot
                 start_time = time()
@@ -918,15 +880,14 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                     repeat = 12
                 else:
                     repeat = 14
-                # bucle que genera cada box
-                for e in ejes:
-                    for i in range(repeat):
-                        if i == 0: 
-                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(fecha,ventana_tiempo,sensor,e)
-                            fig_1.add_trace(go.Box(y=vars()['df'+str(i)][str(vars()['ultimo'+str(i)])], name=str(vars()['ultimo'+str(i)])+' eje: '+str(e),boxpoints='suspectedoutliers',showlegend=False))
-                        else:
-                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(vars()['ultimo'+str(i-1)],ventana_tiempo,sensor,e)
-                            fig_1.add_trace(go.Box(y=vars()['df'+str(i)][str(vars()['ultimo'+str(i)])], name=str(vars()['ultimo'+str(i)])+' eje: '+str(e),boxpoints='suspectedoutliers',showlegend=False))
+                # bucle que genera cada box 
+                for i in range(repeat):
+                    if i == 0: 
+                        vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(fecha,ventana_tiempo,sensor)
+                        fig_1.add_trace(go.Box(y=vars()['df'+str(i)][vars()['ultimo'+str(i)]], name=str(vars()['ultimo'+str(i)]),boxpoints='suspectedoutliers',showlegend=False))
+                    else:
+                        vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(vars()['ultimo'+str(i-1)],ventana_tiempo,sensor)
+                        fig_1.add_trace(go.Box(y=vars()['df'+str(i)][vars()['ultimo'+str(i)]], name=str(vars()['ultimo'+str(i)]),boxpoints='suspectedoutliers',showlegend=False))
         
                 elapsed_time = time() - start_time
                 print("Tiempo Transcurrido crear BOX: %0.1f seconds." % elapsed_time)
@@ -935,7 +896,7 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                 titulo_box = datos.titulo_box(ventana_tiempo)
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
    
-                fig_1.update_layout(title="Promedio de datos cada "+str(titulo_box)+" del "+str(datos.traductor_nombre(sensor))+" durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Aceleración (cm/s²)"})
+                fig_1.update_layout(title="Promedio de datos cada "+str(titulo_box)+" del "+str(datos.nombres_ace()[sensor])+" durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Aceleración (cm/s²)"})
                 
             else:
                 #Listas que conteneran cada trace generado por cada dataframe creado para poder visualizarlos en una grafica
@@ -957,10 +918,10 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                     # bucle que genera cada box para guardarlo en el trace
                     for i in range(repeat):
                         if i == 0: 
-                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(fecha,ventana_tiempo,sen,eje)
+                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(fecha,ventana_tiempo,sen)
                             trace_sec1.append(
                                 go.Box(
-                                    y=vars()['df'+str(i)][str(vars()['ultimo'+str(i)])], 
+                                    y=vars()['df'+str(i)][vars()['ultimo'+str(i)]], 
                                     name=str(vars()['ultimo'+str(i)]),
                                     boxpoints='suspectedoutliers',
                                     showlegend=False,
@@ -968,10 +929,10 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                                 )
                             )
                         else:
-                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(vars()['ultimo'+str(i-1)],ventana_tiempo,sen,eje)
+                            vars()['df'+str(i)],vars()['ultimo'+str(i)] = datos.datos_box(vars()['ultimo'+str(i-1)],ventana_tiempo,sen)
                             trace_sec1.append(
                                 go.Box(
-                                    y=vars()['df'+str(i)][str(vars()['ultimo'+str(i)])], 
+                                    y=vars()['df'+str(i)][vars()['ultimo'+str(i)]], 
                                     name=str(vars()['ultimo'+str(i)]),
                                     boxpoints='suspectedoutliers',
                                     showlegend=False,
@@ -1023,19 +984,17 @@ def update_grafico_1(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
 @app.callback(Output('grafico-2','figure'),
               [Input('boton-aceptar', 'n_clicks')],
               [State('cantidad-sensores','value'),State('horas-disponibles', 'value'),State('elegir-tipo-sensor','value'),State('elegir-sensor','value'),
-               State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value'),State('elegir-eje','value'),State('elegir-eje-multi','value')])
+               State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value')])
 
-def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo,ejes,eje):
-    if len(ejes) < 1 :
-        ejes.append('x')
+def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_multi,fecha,ventana_tiempo):
     if fecha != None:
-        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor,eje)).split(sep=' ')[0]):
+        if str(str(fecha).split(sep='T')[0]) == str(str(datos.fecha_inicial(tipo_sensor)).split(sep=' ')[0]):
             #fecha = dt.strptime(str(str(fecha).split(sep='T')[0]) + ' ' + str(str(datos.fecha_inicial()).split(sep=' ')[1]),'%Y-%m-%d %H:%M:%S')
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
         else:
             fecha = dt.strptime(str(str(fecha).split(sep='T')[0])+' '+datos.crear_hora(hora),'%Y-%m-%d %H:%M:%S')
     else:
-        fecha = datos.fecha_inicial(tipo_sensor,eje)
+        fecha = dt(2008,1,1,0,0,0)
     #Se inicializan variables
     df = pd.DataFrame()
     fig_2 = go.Figure()
@@ -1061,32 +1020,18 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
             if cantidad_sensores == '1-sensor':
                 # La variable df contiene el dataframe que se utiliza para generar el histograma
                 # Aqui se crea el histograma
-                trace_sec2 = []
-                colors = ['#e6194b', '#3cb44b', '#ffe119']
-                count = 0
-                for e in ejes:
-                    start_time = time()
-
-                    df = datos.datos_ace(fecha,ventana_tiempo,sensor,e)
-                    start_time = time()
-
-                    #fig_2 = go.Figure(data=[go.Histogram(x=df[sensor],showlegend=False)])
-                    trace_sec2.append(
-                        go.Histogram(
-                            x=df[sensor],
-                            showlegend=True,
-                            marker_color = colors[count],
-                            name=datos.traductor_nombre(sensor)+' eje: '+str(e)
-                        )
-                    )
-                    count = count + 1
-                    fig_2 = go.Figure(data=trace_sec2)
-                    elapsed_time = time() - start_time
-                    print("Tiempo Transcurrido crear Histograma: %0.1f seconds." % elapsed_time)
+                start_time = time()
+                df = datos.datos_ace(fecha,ventana_tiempo,sensor)
                 
+                start_time = time()
+
+                fig_2 = go.Figure(data=[go.Histogram(x=df[sensor],showlegend=False)])
+
+                elapsed_time = time() - start_time
+                print("Tiempo Transcurrido crear Histograma: %0.1f seconds." % elapsed_time)
                 titulo_OHLC = datos.titulo_OHLC(ventana_tiempo)
 
-                fig_2.update_layout(title="Frecuencia de datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+" del "+str(datos.traductor_nombre(sensor))+"<br>durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Frecuencia (N° de Datos)"}, xaxis={"title": "Aceleración (cm/s²)"},bargap=0.1,)
+                fig_2.update_layout(title="Frecuencia de datos cada "+str(datos.titulo_freq_datos(ventana_tiempo))+" del "+str(datos.nombres_ace()[sensor])+"<br>durante "+str(titulo_OHLC)+"<br>("+fecha_ini_titulo+" - "+fecha_fin_titulo+")",yaxis={"title": "Frecuencia (N° de Datos)"}, xaxis={"title": "Aceleración (cm/s²)"},bargap=0.1,)
             else:
                 #Listas que conteneran cada trace generado por cada dataframe creado para poder visualizarlos en una grafica
                 trace_sec2 = []
@@ -1098,8 +1043,7 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
 
                 #por cada sensor seleccionado se crean df 
                 for sen in sensor_multi:
-
-                    df = datos.datos_ace(fecha,ventana_tiempo,sen,eje)
+                    df = datos.datos_ace(fecha,ventana_tiempo,sen)
 
                     # Aqui se crea el histograma
                     trace_sec2.append(
@@ -1107,7 +1051,7 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
                             x=df[sen],
                             showlegend=True,
                             marker_color = colors[count],
-                            name=datos.traductor_nombre(sen)
+                            name=sen
                         )
                     )
                     count = count + 1
@@ -1130,21 +1074,12 @@ def update_grafico_2(n_clicks,cantidad_sensores,hora,tipo_sensor,sensor,sensor_m
               State('fecha-valor-min','children'),State('num-valor-max','children'),State('num-valor-min','children'),State('alert-sup','children'),
               State('alert-inf','children'),State('fecha-alert-sup','children'),State('fecha-alert-inf','children'),State('elegir-sensor','value'),
               State('elegir-sensor-multi','value'),State('elegir-fecha','date'),State('ventana-tiempo','value'),State('linea-control-sup','value'),
-              State('linea-control-inf','value'),State('horas-disponibles', 'value'),State('cantidad-sensores','value'),State('elegir-eje','value'),
-              State('elegir-eje-multi','value')])
+              State('linea-control-inf','value'),State('horas-disponibles', 'value'),State('cantidad-sensores','value')])
 
-def crear_reporte(clicks, fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensor_multi,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores,ejes,eje):
-    if len(ejes) < 1 :
-        ejes.append('x')
-
-    sensores = list()
-    if (str(type(sensor_multi))=="<class 'list'>"):
-        for sen in sensor_multi:
-            sensores.append(datos.traductor_nombre(sen))
-    else:
-        sensor = datos.traductor_nombre(sensor)
+def crear_reporte(clicks, fig_principal,fig_sec1,fig_sec2,valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensor_multi,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores):
+    
     if clicks > 0:
-        datos.generar_reportes(go.Figure(fig_principal),go.Figure(fig_sec1),go.Figure(fig_sec2),valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensores,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores,ejes,eje)
+        datos.generar_reportes(go.Figure(fig_principal),go.Figure(fig_sec1),go.Figure(fig_sec2),valor_promedio,valor_max,valor_min,fecha_valor_max,fecha_valor_min,num_valor_max,num_valor_min,alert_sup,alert_inf,fecha_alert_sup,fecha_alert_inf,sensor,sensor_multi,fecha,ventana_tiempo,valor_linea_control_sup,valor_linea_control_inf,hora,cantidad_sensores)
     return 'uno'
 
 
